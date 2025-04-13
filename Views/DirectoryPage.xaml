@@ -1,0 +1,116 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModel="clr-namespace:ResearchApp.ViewModels"
+             xmlns:converters="clr-namespace:ResearchApp.Utils"
+             xmlns:behaviors="clr-namespace:ResearchApp.Behaviors"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="ResearchApp.Views.DirectoryPage"
+             Title="Contacts">
+
+    <ContentPage.Resources>
+
+        <ResourceDictionary>
+            <converters:IndexConverter x:Key="IndexConverter"/>
+        </ResourceDictionary>
+        <Style TargetType="Border" x:Key="ContactItemStyle">
+            <Setter Property="StrokeShape" Value="RoundRectangle 10"/>
+            <Setter Property="Stroke" Value="Transparent"/>
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFFFFF, Dark=#1E1E1E}"/>
+            <Setter Property="Margin" Value="10,5"/>
+            <Setter Property="Padding" Value="15,10"/>
+        </Style>
+
+        <Style TargetType="Label" x:Key="ContactTextStyle">
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=#333333, Dark=#EEEEEE}"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- Search Bar -->
+        <SearchBar Grid.Row="0"
+                   Placeholder="Search contacts..."
+                   Text="{Binding SearchText}"
+                   Margin="10,5"/>
+
+        <!-- Filter Picker -->
+        <Picker Grid.Row="1"
+        Title="Filter contacts"
+        ItemsSource="{Binding FilterOptions}"
+                Margin="10,5"
+                WidthRequest="150"
+                HorizontalOptions="End"
+        ItemDisplayBinding="{Binding DisplayText}"
+        SelectedItem="{Binding SelectedFilterOption, Mode=TwoWay}"
+                SelectedIndex="{Binding SelectedFilterIndex, Mode=TwoWay}">
+  
+        </Picker>
+
+        <!-- Contacts List -->
+        <CollectionView x:Name="ContactsCollection"
+                       Grid.Row="2"
+                       ItemsSource="{Binding FilteredContacts}"
+                       SelectionMode="None"
+                              RemainingItemsThreshold="5"
+                RemainingItemsThresholdReachedCommand="{Binding LoadMoreContactsCommand}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Style="{StaticResource ContactItemStyle}">
+                        <Grid ColumnDefinitions="40,*" RowDefinitions="Auto,Auto,Auto">
+                            <!-- Numbering -->
+                            <Label Grid.Column="0" Grid.RowSpan="3"
+                                   Text="{Binding ., Converter={StaticResource IndexConverter}, 
+                                          ConverterParameter={x:Reference ContactsCollection}}"
+                                   FontAttributes="Bold"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Center"/>
+
+                            <!-- Contact Info -->
+                            <StackLayout Grid.Column="1" Grid.Row="0" Orientation="Horizontal">
+
+                                <Label Text="Name:" 
+                               Style="{StaticResource ContactTextStyle}"
+                               FontAttributes="Bold"/>
+                                <Label 
+                                   Text="{Binding Name}" 
+                                    Margin="3,0,0,0"
+                                   Style="{StaticResource ContactTextStyle}"/>
+                                <Label Text="{Binding IsEmployee, Converter={StaticResource BoolToTextConverter}, 
+                                      ConverterParameter='(Employee)|(Client)'}"
+                               FontSize="12"
+                                    Margin="2,1,0,0"
+                                       
+                                   FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=Black, Dark=LightGray}"/>
+                            </StackLayout>
+
+                            <StackLayout Grid.Column="1" Grid.Row="1" Orientation="Horizontal">
+
+                                <Label Text="Phone:"
+                                   FontAttributes="Bold"
+                                       Style="{StaticResource ContactTextStyle}"/>
+                                <Label Text="{Binding Phone}"
+                                    Margin="3,0,0,0"
+                                       
+                                        Style="{StaticResource ContactTextStyle}"/>
+                            </StackLayout>
+
+                                <StackLayout Grid.Column="1" Grid.Row="2"
+                                         Orientation="Horizontal"
+                                         Spacing="5">
+                                <Label Text="Address:"
+                                    Margin="3,0,0,0"
+                                       
+                                   FontAttributes="Bold"
+                                        Style="{StaticResource ContactTextStyle}"/>
+                                <Label Text="{Binding DisplayAddress}"
+                                       Style="{StaticResource ContactTextStyle}"
+                                       LineBreakMode="TailTruncation"/>
+                                </StackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

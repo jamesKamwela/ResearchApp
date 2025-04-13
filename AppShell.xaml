@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="ResearchApp.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:ResearchApp.Views"
+    xmlns:local="clr-namespace:ResearchApp">
+
+    <!-- Home Page -->
+    <ShellContent Route="home" ContentTemplate="{DataTemplate local:MainPage}" />
+
+    <!-- Dashboard -->
+    <FlyoutItem Title="Dashboard">
+        <ShellContent
+            Title="Dashboard"
+            ContentTemplate="{DataTemplate views:Dashboard}"
+            Route="Dashboard" />
+    </FlyoutItem>
+
+    <!-- İşVar -->
+    <FlyoutItem Title="İşVar">
+        <ShellContent
+            Title="Profile"
+            ContentTemplate="{DataTemplate views:Isvar}"
+            Route="Isvar" />
+    </FlyoutItem>
+
+    <!-- Profile -->
+    <FlyoutItem Title="Profile">
+        <ShellContent
+            Title="Profile"
+            ContentTemplate="{DataTemplate views:Profile}"
+            Route="Profile" />
+    </FlyoutItem>
+
+  
+
+    <!-- Data -->
+    <FlyoutItem Title="Data">
+        <Tab>
+
+            <ShellContent
+                Title="Add New Client"
+                ContentTemplate="{DataTemplate views:AddClient}"
+                Route="AddClient" />
+            <ShellContent
+                Title="Add New Employee"
+                ContentTemplate="{DataTemplate views:AddEmployee}"
+                Route="AddEmployee" />
+            <ShellContent
+                Title="Contacts"
+                ContentTemplate="{DataTemplate views:DirectoryPage}"
+                Route="directory" />
+        </Tab>
+    </FlyoutItem>
+
+    <!-- Settings -->
+    <FlyoutItem Title="Settings">
+        <ShellContent
+            Title="Settings"
+            ContentTemplate="{DataTemplate views:Settings}"
+            Route="Settings" />
+    </FlyoutItem>
+
+    <!-- Logout -->
+    <FlyoutItem Title="Logout">
+        <ShellContent
+            Title="Logout"
+            ContentTemplate="{DataTemplate local:MainPage}"
+            Route="Logout" />
+    </FlyoutItem>
+
+</Shell>

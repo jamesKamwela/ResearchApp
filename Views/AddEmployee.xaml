@@ -1,0 +1,68 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:ResearchApp.ViewModels"
+             xmlns:behaviors="clr-namespace:CommunityToolkit.Maui.Behaviors;assembly=CommunityToolkit.Maui"
+             x:Class="ResearchApp.Views.AddEmployee"
+             Title="Add New Employee">
+    <ContentPage.Resources>
+        <!-- Define styles for valid and invalid entries -->
+               <Style x:Key="ValidEntryStyle" TargetType="Entry">
+            <Setter Property="TextColor" Value="Black" />
+        </Style>
+        <Style x:Key="InvalidEntryStyle" TargetType="Entry">
+            <Setter Property="TextColor" Value="Red" />
+        </Style>
+    </ContentPage.Resources>
+    <ScrollView>
+        <Border Stroke="Transparent" BackgroundColor="White" Margin="10" WidthRequest="500"
+                HorizontalOptions="Start" Padding="10,10,10,10">
+
+            <VerticalStackLayout Padding="20" Spacing="15">
+                <!-- Employee Name -->
+                <Label Text="Employee Name" />
+                <Entry Placeholder="Enter Name" Text="{Binding EmployeeName, Mode=TwoWay}">
+                    <Entry.Behaviors>
+                        <behaviors:TextValidationBehavior
+                            InvalidStyle="{StaticResource InvalidEntryStyle}"
+                            ValidStyle="{StaticResource ValidEntryStyle}"
+                            Flags="ValidateOnValueChanged"
+                            MaximumLength="200"
+                            MinimumLength="3" />
+                    </Entry.Behaviors>
+                </Entry>
+
+                <!-- Employee Phone -->
+                <Label Text="Employee Phone" />
+                <Entry Placeholder="Enter Phone" Text="{Binding EmployeePhone, Mode=TwoWay}" Keyboard="Telephone">
+                    <Entry.Behaviors>
+                        <behaviors:TextValidationBehavior
+                            InvalidStyle="{StaticResource InvalidEntryStyle}"
+                            ValidStyle="{StaticResource ValidEntryStyle}"
+                            Flags="ValidateOnValueChanged"
+                            RegexPattern="^\d{10,15}$" />
+                    </Entry.Behaviors>
+                </Entry>
+                <!-- Employee Address -->
+                <Label Text="Employee Address" />
+                <Entry Placeholder="Enter Address" Text="{Binding EmployeeAddress, Mode=TwoWay}">
+                    <Entry.Behaviors>
+                        <behaviors:TextValidationBehavior
+                            InvalidStyle="{StaticResource InvalidEntryStyle}"
+                            ValidStyle="{StaticResource ValidEntryStyle}"
+                            Flags="ValidateOnValueChanged"
+                            MaximumLength="100"
+                            MinimumLength="5" />
+                    </Entry.Behaviors>
+                </Entry>
+
+                <!-- Buttons -->
+              <Grid ColumnDefinitions="*,*" Margin="290,0,0,0">
+                    <Button Text="Cancel" Command="{Binding CancelCommand}" Grid.Column="0" />
+                    <Button Text="Save" Command="{Binding SaveEmployeeCommand}" IsEnabled="{Binding IsValid}" Grid.Column="1" />
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+    </ScrollView>
+
+</ContentPage>
+    

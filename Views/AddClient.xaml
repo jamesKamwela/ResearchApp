@@ -1,0 +1,140 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:ResearchApp.ViewModels"
+             xmlns:behaviors="clr-namespace:CommunityToolkit.Maui.Behaviors;assembly=CommunityToolkit.Maui"
+             x:Class="ResearchApp.Views.AddClient"
+             Title="Add Client">
+    <ContentPage.Resources>
+        <!-- Define styles for valid and invalid entries -->
+        <Style x:Key="ValidEntryStyle" TargetType="Entry">
+            <Setter Property="TextColor" Value="Black" />
+        </Style>
+        <Style x:Key="InvalidEntryStyle" TargetType="Entry">
+            <Setter Property="TextColor" Value="Red" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <Border Stroke="Transparent" BackgroundColor="White" Margin="10" WidthRequest="500"
+                HorizontalOptions="Start" Padding="10,10,10,10">
+
+            <VerticalStackLayout Padding="20" Spacing="15">
+                <VerticalStackLayout IsVisible="{Binding IsClientSectionVisible}">
+                <!-- Client Details -->
+                    <Label Text="Client Data" FontSize="24" FontAttributes="Bold" HorizontalOptions="Start" Padding="200,0,0,0"/>
+
+                    <!-- Client's Name -->
+                    <Label Text="Client's Name" />
+                    <Entry Placeholder="Enter Name" Text="{Binding ClientName, Mode=TwoWay}">
+                        <Entry.Behaviors>
+                            <behaviors:TextValidationBehavior
+                                InvalidStyle="{StaticResource InvalidEntryStyle}"
+                                ValidStyle="{StaticResource ValidEntryStyle}"
+                                Flags="ValidateOnValueChanged"
+                                MaximumLength="200"
+                                MinimumLength="3" />
+                        </Entry.Behaviors>
+                    </Entry>
+
+                    <!-- Client's Phone -->
+                    <Label Text="Client's Phone" />
+                    <Entry Placeholder="Enter Client's Phone Number" Text="{Binding ClientPhone, Mode=TwoWay}" Keyboard="Telephone">
+                        <Entry.Behaviors>
+                            <behaviors:TextValidationBehavior
+                                InvalidStyle="{StaticResource InvalidEntryStyle}"
+                                ValidStyle="{StaticResource ValidEntryStyle}"
+                                Flags="ValidateOnValueChanged"
+                                RegexPattern="^\d{10}$" />
+                        </Entry.Behaviors>
+                    </Entry>
+
+                    <!-- Client's Address -->
+                    <Label Text="Client's Address" />
+                    <Entry Placeholder="Enter Client's Address" Text="{Binding ClientAddress, Mode=TwoWay}">
+                        <Entry.Behaviors>
+                            <behaviors:TextValidationBehavior
+                                InvalidStyle="{StaticResource InvalidEntryStyle}"
+                                ValidStyle="{StaticResource ValidEntryStyle}"
+                                Flags="ValidateOnValueChanged"
+                                MaximumLength="100"
+                                MinimumLength="5" />
+                        </Entry.Behaviors>
+                    </Entry>
+                </VerticalStackLayout>
+
+                <!-- Save and Cancel buttons for Client Details -->
+
+                <Grid ColumnDefinitions="*,*" Margin="290,0,0,0" IsVisible="{Binding IsClientSectionSaveCancelVisible}"  >
+                        <Button Text="Cancel" Command="{Binding CancelClientCommand}" Grid.Column="0" />
+                        <Button Text="Save" Command="{Binding SaveClientCommand}" Grid.Column="1" IsEnabled="{Binding IsValid}" />
+                    </Grid>
+
+
+                <!-- Add Job Button -->
+                
+                    <Button Text="Add a new job" Margin="200,-10,0,0" 
+                            Command="{Binding AddJobCommand}" 
+                            FontSize="10" HorizontalOptions="Start" WidthRequest="95" HeightRequest="40"
+                            IsEnabled="{Binding NewJobAddedEnabled}" 
+                            />
+                    
+
+               <VerticalStackLayout Spacing="10" IsVisible="{Binding IsJobSectionVisible}">
+                <!-- Job Details -->
+                    <Label Text="Job Name:"/>
+                    <Entry Placeholder="Enter Job's Name" Text="{Binding JobName, Mode=TwoWay}
+                        ">
+                        <Entry.Behaviors>
+                            <behaviors:TextValidationBehavior
+                                InvalidStyle="{StaticResource InvalidEntryStyle}"
+                                ValidStyle="{StaticResource ValidEntryStyle}"
+                                Flags="ValidateOnValueChanged"
+                                MaximumLength="100"
+                                MinimumLength="2" />
+                        </Entry.Behaviors>
+                    </Entry>
+
+                    <!-- Job Amount and Unit -->
+                    <HorizontalStackLayout>
+                        <Entry Placeholder="Enter Amount" Text="{Binding JobAmount, Mode=TwoWay}" Keyboard="Numeric">
+                            <Entry.Behaviors>
+                                <behaviors:TextValidationBehavior
+                                    InvalidStyle="{StaticResource InvalidEntryStyle}"
+                                    ValidStyle="{StaticResource ValidEntryStyle}"
+                                    Flags="ValidateOnValueChanged"
+                                    MaximumLength="100"
+                                    MinimumLength="2" />
+                            </Entry.Behaviors>
+                        </Entry>
+
+                        <Label Text="Per:" VerticalOptions="Center" Margin="10,0,0,0"/>
+                        <Picker SelectedItem="{Binding SelectedJobUnit}" HorizontalOptions="Start">
+                            <Picker.Items>
+                                <x:String>Item</x:String>
+                                <x:String>Ton</x:String>
+                                <x:String>Square meter</x:String>
+                            </Picker.Items>
+                        </Picker>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- Save and Cancel buttons for Job Details -->
+                <Grid ColumnDefinitions="*,*" Margin="290,0,0,0" IsVisible="{Binding IsJobSectionSaveCancelVisible}" >
+                        <Button Text="Cancel" Command="{Binding CancelAndExitCommand}" Grid.Column="0" />
+                        <Button Text="Save" Command="{Binding SaveJobCommand}" Grid.Column="1" IsEnabled="{Binding IsJobValid}" />
+                    </Grid>
+                <!-- Undo and Redo Buttons -->
+                <Grid ColumnDefinitions="*,*" Margin="290,0,0,0">
+                    <Button Text="Undo" Command="{Binding UndoLastJobCommand}" Grid.Column="0" />
+                    <Button Text="Redo" Command="{Binding RedoLastJobCommand}" Grid.Column="1" />
+                </Grid>
+
+                <!-- Save & Exit and Cancel & Exit buttons -->
+                <Grid ColumnDefinitions="*,*" Margin="290,0,0,0" IsVisible="{Binding IsClientSaveExitVisible}">
+                    <Button Text="Cancel" Command="{Binding CancelAndExitCommand}" Grid.Column="0" />
+                    <Button Text="Save" Command="{Binding SaveAndExitCommand}" Grid.Column="1" />
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+    </ScrollView>
+</ContentPage>
