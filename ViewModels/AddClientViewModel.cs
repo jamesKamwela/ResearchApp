@@ -12,88 +12,316 @@ using ResearchApp.Utils;
 using CommunityToolkit.Mvvm.Messaging;
 using static ResearchApp.ViewModels.ContactsViewModel;
 using System.Net;
+using System.Globalization;
 
 
 
 public partial class AddClientViewModel : ObservableObject
 {
+    // =============================================
+    // 1. INITIALIZATION & DEPENDENCIES
+    // =============================================
+    private readonly SemaphoreSlim _saveLock = new(1, 1);
     private readonly IClientDatabaseService _databaseService;
-    //private readonly IJobDatabaseService _jobdatabaseService;
-
     private readonly ILogger<AddClientViewModel> _logger;
-    private Stack<Job> _undoStack = new Stack<Job>();
-    public AddClientViewModel(IClientDatabaseService databaseService, IJobDatabaseService jobdatabaseService, 
-        ILogger<AddClientViewModel> logger)
+    private readonly Stack<Job> _undoStack = new();
+
+    public AddClientViewModel(IClientDatabaseService databaseService,
+                            ILogger<AddClientViewModel> logger)
     {
         _databaseService = databaseService;
-        //_jobdatabaseService = jobdatabaseService;
         _logger = logger;
         Jobs = new ObservableCollection<Job>();
-        ResetForm(); // Initialize the form to its default state
+        ResetForm();
         // LoadClientsWithJobs();
-        //ResetDatabaseNow();
+        // ResetDatabaseNow();
     }
+    // =============================================
+    // 2. PROPERTIES & VALIDATION
+    // =============================================
+    [ObservableProperty] private bool isBusy;
+    [ObservableProperty] private bool isJobSectionVisible;
+    [ObservableProperty] private bool isClientSaveExitVisible;
+    [ObservableProperty] private bool isClientSaved;
+    [ObservableProperty] private bool newJobAddedEnabled;
+    [ObservableProperty] private int clientId;
+    [ObservableProperty] private bool isnewJobAddedVisible;
 
+    // Client Properties
     [ObservableProperty]
-    private bool isBusy;
-
-   
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsValid))] // Notify when IsValid changes
+    [NotifyPropertyChangedFor(nameof(IsValid))]
     private string clientName = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsValid))]
+    private string clientAddress = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsValid))]
+    private string clientPhone = string.Empty;
+
+    // Job Properties
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsJobValid))]
+    private string jobName = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsJobValid))]
+    private string jobAmount = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsJobValid))]
+    private string selectedJobUnit;
+
+    public ObservableCollection<Job> Jobs { get; }
+    public bool IsValid => ValidateClient();
+    public bool IsJobValid => ValidateJob();
+    public bool IsPhoneValid => ValidatePhone(ClientPhone);
+
+
+
 
     [ObservableProperty]
     private bool isJobSectionSaveCancelVisible;
 
-    [ObservableProperty]
-    private bool newJobAddedEnabled;
 
-    public ObservableCollection<Job> Jobs { get; }
-
-    [ObservableProperty]
-    private int clientId;
-
-    [ObservableProperty]
-    private bool isClientSaveExitVisible;
 
     [ObservableProperty]
     private bool isClientSectionVisible;
 
     [ObservableProperty]
-    private bool isClientSaved;
-
-    [ObservableProperty]
     private bool isClientSectionSaveCancelVisible;
 
-    [ObservableProperty]
-    private bool isJobSectionVisible;
+    // =============================================
+    // 3. VALIDATION LOGIC
+    // =============================================
+    private bool ValidateClient() =>
+        !string.IsNullOrWhiteSpace(ClientName) &&
+        ClientName.Length is >= 3 and <= 100 &&
+        !string.IsNullOrWhiteSpace(ClientAddress) &&
+        ClientAddress.Length is >= 1 and <= 200 &&
+        IsPhoneValid;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsValid))] // Notify when IsValid changes
-    private string clientAddress = string.Empty;
+    private bool ValidatePhone(string phone) =>
+        !string.IsNullOrWhiteSpace(phone) &&
+        phone.Length is >= 7 and <= 15 &&
+        phone.All(c => char.IsDigit(c) || c == '+' || c == ' ' || c == '-');
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsValid))] // Notify when IsValid changes
-    private string clientPhone = string.Empty;
+    private bool ValidateJob() =>
+        !string.IsNullOrWhiteSpace(JobName) &&
+        JobName.Length is >= 3 and <= 100 &&
+        ValidateJobAmount(JobAmount) &&
+        !string.IsNullOrWhiteSpace(SelectedJobUnit);
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsJobValid))] // Notify when IsJobValid changes
-    private string jobName = string.Empty;
+    private bool ValidateJobAmount(string amount) =>
+        decimal.TryParse(amount?.Replace(',', '.'),
+                       NumberStyles.Any,
+                       CultureInfo.InvariantCulture,
+                       out decimal result) && result > 0;
+    // =============================================
+    // 4. CLIENT OPERATIONS
+    // =============================================
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsJobValid))] // Notify when IsJobValid changes
-    private string jobAmount = string.Empty;
+    [RelayCommand]
+    private async Task SaveClient()
+    {
+        if (!ValidateClient())
+        {
+            await App.Current.MainPage.DisplayAlert("Validation Error", "Please enter valid client details.", "OK");
+            return;
+        }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsJobValid))] // Notify when IsJobValid changes
-    private string selectedJobUnit;
+        // Confirm with the user before saving
+        bool confirm = await App.Current.MainPage.DisplayAlert(
+            "Confirm Save",
+            $"Are you sure you want to save the following client?\n\nName: {ClientName}\nAddress: {ClientAddress}\nPhone: {ClientPhone}",
+            "Yes", "No");
 
-    public bool IsValid => ValidateClient(); // Client validation
-    public bool IsJobValid => ValidateJob(); // Job validation
+        if (confirm)
+        {
+            try
+            {
+                var client = new Client
+                {
+                    Name = ClientName.CapitalizeFirstLetter(),
+                    Address = ClientAddress.CapitalizeFirstLetter(),
+                    Phone = ClientPhone,
+                };
+
+                // Save the client and store the generated ID
+                await _databaseService.SaveClientAsync(client);
+                ClientId = client.Id; // Store the client ID for later use
+                IsClientSaved = true;
+                IsClientSaveExitVisible = false; // Show bottom buttons after saving client
+                await App.Current.MainPage.DisplayAlert("Success", "Client saved successfully.", "OK");
+
+                NewJobAddedEnabled = true; // Enable the "Add a new job" button
+
+                // Do not clear client fields
+                IsJobSectionVisible = false;
+                IsClientSectionSaveCancelVisible = false;
+                IsnewJobAddedVisible = true; // Show "Add a new job" button
+                newJobAddedEnabled = true; // Enable the "Add a new job" button
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while saving the client.");
+                await App.Current.MainPage.DisplayAlert("Error", $"An error occurred while saving the client: {ex.Message}", "OK");
+            }
+        }
+    }
+
+    [RelayCommand]
+    private async Task CancelClient()
+    {
+        bool confirm = await App.Current.MainPage.DisplayAlert("Confirm Cancellation", "Are you sure you want to cancel?", "Yes", "No");
+        if (confirm)
+        {
+            try
+            {
+                ResetForm();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while canceling the client.");
+                await App.Current.MainPage.DisplayAlert("Error", $"An error occurred while canceling: {ex.Message}", "OK");
+            }
+        }
+    }
+    // =============================================
+    // 5. JOB OPERATIONS
+    // =============================================
 
 
+    [RelayCommand]
+    private void AddJob()
+    {
+        try
+        {
+            IsJobSectionVisible = true; // Show job section
+            IsJobSectionSaveCancelVisible = true;
+            IsClientSectionSaveCancelVisible = false;
+            IsClientSaveExitVisible = false; // Hide bottom buttons
+            IsnewJobAddedVisible = false; // Disable "Add a new job" button while adding a job
 
+            _logger.LogInformation("Job section opened for adding a new job.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while adding a job.");
+            Debug.WriteLine($"An error occurred while adding a job: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task SaveJob()
+    {
+
+        if (!IsJobValid)
+        {
+            await ShowValidationError("Please fix job errors");
+            return;
+        }
+
+        
+            bool confirm = await App.Current.MainPage.DisplayAlert(
+         "Confirm Save",
+         $"Are you sure you want to save the following Job?\n\nName: {JobName}\nAmount: {JobAmount}\nUnit: {SelectedJobUnit}",
+         "Yes", "No");
+        try
+        {
+            if (confirm)
+            {
+                var job = new Job
+                {
+                    JobName = JobName.CapitalizeFirstLetter(),
+                    Amount = decimal.Parse(JobAmount.Replace(',', '.')),
+                    Unit = SelectedJobUnit,
+                    ClientId = ClientId
+                };
+                await _databaseService.SaveJobsAsync(new List<Job> { job });
+                Jobs.Add(job);
+
+                ClearJobFields();
+                IsJobSectionVisible = false;
+                IsnewJobAddedVisible = true;
+                NewJobAddedEnabled = true;
+                IsClientSaveExitVisible = true;
+                await ShowSuccess("Job saved!");
+            }
+            else
+            {
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Job save failed");
+            await ShowError($"Failed to save job: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private void CancelJob()
+    {
+        try
+        {
+            ClearJobFields();
+            IsJobSectionVisible = false;
+            IsJobSectionSaveCancelVisible = false;
+            IsClientSectionSaveCancelVisible = false;
+            IsClientSaveExitVisible = true; // Show bottom buttons after canceling job
+            NewJobAddedEnabled = true; // Enable the "Add a new job" button
+            _logger.LogInformation("Job section closed without saving.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while canceling the job.");
+            Debug.WriteLine($"An error occurred while canceling the job: {ex.Message}");
+        }
+    }
+
+    // =============================================
+    // 6. UNDO/REDO OPERATIONS
+    // =============================================
+
+
+    [RelayCommand]
+    private void UndoLastJob()
+    {
+        try
+        {
+            if (Jobs.Count > 0)
+            {
+                var lastJob = Jobs.Last();
+                _undoStack.Push(lastJob);
+                Jobs.Remove(lastJob);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while undoing the last job.");
+            Debug.WriteLine($"An error occurred while undoing the last job: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private void RedoLastJob()
+    {
+        try
+        {
+            if (_undoStack.Count > 0)
+            {
+                var lastUndoneJob = _undoStack.Pop();
+                Jobs.Add(lastUndoneJob);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while redoing the last job.");
+            Debug.WriteLine($"An error occurred while redoing the last job: {ex.Message}");
+        }
+    }
     private async void ResetDatabaseNow()
     {
         try
@@ -157,252 +385,58 @@ public partial class AddClientViewModel : ObservableObject
         }
     }
 
+   
 
-    private bool ValidateClient()
+
+
+   
+
+    private bool ValidateJobs()
     {
-        return !string.IsNullOrWhiteSpace(ClientName) &&
-               ClientName.Length >= 3 &&
-               ClientName.Length <= 100 &&
-               !string.IsNullOrWhiteSpace(ClientAddress) &&
-               ClientAddress.Length >= 1 &&
-               ClientAddress.Length <= 200 &&
-               !string.IsNullOrWhiteSpace(ClientPhone) &&
-               ClientPhone.Length == 10 &&
-               ClientPhone.All(char.IsDigit);
+        // UI-specific validation
+        return Jobs.All(j =>
+            !string.IsNullOrWhiteSpace(j.JobName) &&
+            j.JobName.Length >= 3 &&
+            j.Amount > 0
+        );
     }
 
-    private bool ValidateJob()
-    {
-        return !string.IsNullOrWhiteSpace(JobName) &&
-               JobName.Length >= 3 &&
-               JobName.Length <= 100 &&
-               !string.IsNullOrWhiteSpace(JobAmount) &&
-               decimal.TryParse(JobAmount, out _) &&
-               !string.IsNullOrWhiteSpace(SelectedJobUnit);
-    }
-
-    [RelayCommand]
-    private async Task SaveClient()
-    {
-        if (!ValidateClient())
-        {
-            await App.Current.MainPage.DisplayAlert("Validation Error", "Please enter valid client details.", "OK");
-            return;
-        }
-
-        // Confirm with the user before saving
-        bool confirm = await App.Current.MainPage.DisplayAlert(
-            "Confirm Save",
-            $"Are you sure you want to save the following client?\n\nName: {ClientName}\nAddress: {ClientAddress}\nPhone: {ClientPhone}",
-            "Yes", "No");
-
-        if (confirm)
-        {
-            try
-            {
-                var client = new Client
-                {
-                    Name = ClientName.CapitalizeFirstLetter(),
-                    Address = ClientAddress.CapitalizeFirstLetter(),
-                    Phone = ClientPhone,
-                    //Jobs = Jobs.ToList() // Assign the jobs to the client
-                };
-
-                // Save the client and store the generated ID
-                await _databaseService.SaveClientAsync(client);
-                ClientId = client.Id; // Store the client ID for later use
-                IsClientSaved = true;
-                IsClientSaveExitVisible = false; // Show bottom buttons after saving client
-                await App.Current.MainPage.DisplayAlert("Success", "Client saved successfully.", "OK");
-
-                NewJobAddedEnabled = true; // Enable the "Add a new job" button
-
-                // Do not clear client fields
-                IsJobSectionVisible = false;
-                IsClientSectionSaveCancelVisible = false;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while saving the client.");
-                await App.Current.MainPage.DisplayAlert("Error", $"An error occurred while saving the client: {ex.Message}", "OK");
-            }
-        }
-    }
-
-    [RelayCommand]
-    private async Task CancelClient()
-    {
-        bool confirm = await App.Current.MainPage.DisplayAlert("Confirm Cancellation", "Are you sure you want to cancel?", "Yes", "No");
-        if (confirm)
-        {
-            try
-            {
-                // Clear client fields
-                ClientName = string.Empty;
-                ClientAddress = string.Empty;
-                ClientPhone = string.Empty;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while canceling the client.");
-                await App.Current.MainPage.DisplayAlert("Error", $"An error occurred while canceling: {ex.Message}", "OK");
-            }
-        }
-    }
-
-    [RelayCommand]
-    private void AddJob()
-    {
-        try
-        {
-            IsJobSectionVisible = true; // Show job section
-            IsJobSectionSaveCancelVisible = true;
-            IsClientSectionSaveCancelVisible = false;
-            IsClientSaveExitVisible = false; // Hide bottom buttons
-            NewJobAddedEnabled = false; // Disable "Add a new job" button while adding a job
-
-            _logger.LogInformation("Job section opened for adding a new job.");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An error occurred while adding a job.");
-            Debug.WriteLine($"An error occurred while adding a job: {ex.Message}");
-        }
-    }
-
-    [RelayCommand]
-    private async Task SaveJob()
-    {
-        if (!ValidateJob())
-        {
-            await App.Current.MainPage.DisplayAlert("Validation Error", "Please enter valid job details.", "OK");
-            return;
-        }
-
-        // Confirm with the user before saving
-        bool confirm = await App.Current.MainPage.DisplayAlert(
-            "Confirm Job",
-            $"Job Name: {JobName}\nAmount: {JobAmount}\nUnit: {SelectedJobUnit}",
-            "Yes", "No");
-
-        if (confirm)
-        {
-            try
-            {
-                if (ClientId <= 0)
-                {
-                    await App.Current.MainPage.DisplayAlert("Error", "No client selected. Please save the client first.", "OK");
-                    return;
-                }
-
-                var job = new Job
-                {
-                    JobName = JobName.CapitalizeFirstLetter(),
-                    Amount = decimal.Parse(JobAmount),
-                    Unit = SelectedJobUnit,
-                    ClientId = ClientId // Assign the existing client's ID to the job
-                };
-
-                // Save the job to the database
-                //await _databaseService.SaveJobsAsync(job);
-
-                // Add the job to the observable collection
-                Jobs.Add(job);
-                await App.Current.MainPage.DisplayAlert("Success", "Job added successfully.", "OK");
-
-                // Clear job fields and hide job section
-                JobName = string.Empty;
-                JobAmount = string.Empty;
-                SelectedJobUnit = null;
-                IsJobSectionVisible = false; // Hide job section
-                NewJobAddedEnabled = true; // Re-enable the "Add a new job" button
-                IsJobSectionSaveCancelVisible = false;
-                IsClientSaveExitVisible = true;
-
-                _logger.LogInformation("Job saved successfully.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while saving the job.");
-                await App.Current.MainPage.DisplayAlert("Error", $"An error occurred while saving the job: {ex.Message}", "OK");
-            }
-        }
-    }
+    // =============================================
+    // 7. FINALIZATION OPERATIONS
+    // =============================================
     [RelayCommand]
     private async Task SaveAndExit()
     {
-        if (IsBusy) return; // Prevent multiple simultaneous saves
+        if (IsBusy) return;
+        IsBusy = true;
 
-        IsBusy = true; // Set the busy flag
-
+        await _saveLock.WaitAsync();
         try
         {
-            if (!ValidateClient() || Jobs.Count == 0)
+            if (!IsClientSaved || Jobs.Count == 0)
             {
-                await App.Current.MainPage.DisplayAlert("Validation Error", "Please enter valid client and job details.", "OK");
+                await ShowValidationError(IsClientSaved ?
+                    "Add at least one job" : "Save client first");
                 return;
             }
 
-            // Fetch the last client from the database
-            var lastClient = await _databaseService.GetLastClientAsync();
+            WeakReferenceMessenger.Default.Send(new ClientAddedMessage(
+          await _databaseService.GetClientByIdAsync(ClientId)));
 
-            // Check if the last client has the same name, phone, and address
-            if (lastClient != null &&
-                lastClient.Name == ClientName &&
-                lastClient.Phone == ClientPhone &&
-                lastClient.Address == ClientAddress)
-            {
-                // Add jobs to the last client
-                foreach (var job in Jobs)
-                {
-                    job.ClientId = lastClient.Id; // Assign the last client's ID to the job
-                }
-
-                // Save the jobs to the last client
-                await _databaseService.SaveJobsAsync(Jobs.ToList());
-
-
-                var updatedClient = await _databaseService.GetClientByIdAsync(lastClient.Id);
-                WeakReferenceMessenger.Default.Send(new ClientAddedMessage(updatedClient));
-                await App.Current.MainPage.DisplayAlert("Success", "Jobs added to the existing client successfully.", "OK");
-
-            }
-            else
-            {
-                // Create a new client and save it with the jobs
-                var client = new Client
-                {
-                    Name = ClientName,
-                    Address = ClientAddress,
-                    Phone = ClientPhone,
-                    Jobs = Jobs.ToList() // Assign the jobs to the client
-                };
-
-                // Save the client and their jobs
-                var newClient= await _databaseService.SaveClientAsync(client);
-                WeakReferenceMessenger.Default.Send(new ClientAddedMessage(newClient));
-
-                await App.Current.MainPage.DisplayAlert("Success", "New client and jobs saved successfully.", "OK");
-
-            }
-
-            // Reset the form to its initial state
             ResetForm();
             await Shell.Current.GoToAsync("..");
-            
-
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while saving and exiting.");
-            await App.Current.MainPage.DisplayAlert("Error", $"An error occurred while saving and exiting: {ex.Message}", "OK");
+            _logger.LogError(ex, "Error in SaveAndExit");
+            await App.Current.MainPage.DisplayAlert("Error", "An error occurred while saving. Please try again.", "OK");
         }
         finally
         {
-            IsBusy = false; // Reset the busy flag
+            IsBusy = false;
+            _saveLock.Release();
         }
     }
-   
     [RelayCommand]
     private async Task CancelAndExit()
     {
@@ -421,41 +455,14 @@ public partial class AddClientViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private void UndoLastJob()
+    // =============================================
+    // 8. HELPER METHODS
+    // =============================================
+    private void ClearJobFields()
     {
-        try
-        {
-            if (Jobs.Count > 0)
-            {
-                var lastJob = Jobs.Last();
-                _undoStack.Push(lastJob);
-                Jobs.Remove(lastJob);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An error occurred while undoing the last job.");
-            Debug.WriteLine($"An error occurred while undoing the last job: {ex.Message}");
-        }
-    }
-
-    [RelayCommand]
-    private void RedoLastJob()
-    {
-        try
-        {
-            if (_undoStack.Count > 0)
-            {
-                var lastUndoneJob = _undoStack.Pop();
-                Jobs.Add(lastUndoneJob);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An error occurred while redoing the last job.");
-            Debug.WriteLine($"An error occurred while redoing the last job: {ex.Message}");
-        }
+        JobName = string.Empty;
+        JobAmount = string.Empty;
+        SelectedJobUnit = null;
     }
 
     private void ResetForm()
@@ -463,17 +470,15 @@ public partial class AddClientViewModel : ObservableObject
         try
         {
             // Clear client fields
-            ClientName = string.Empty;
-            ClientAddress = string.Empty;
-            ClientPhone = string.Empty;
+            ClientName = ClientAddress = ClientPhone = string.Empty;
+            ClearJobFields();
+            Jobs.Clear();
 
             // Clear job fields
             JobName = string.Empty;
             JobAmount = string.Empty;
             SelectedJobUnit = null;
 
-            // Clear the Jobs collection
-            Jobs.Clear();
 
             // Reset visibility states
             IsJobSectionVisible = false;
@@ -495,4 +500,26 @@ public partial class AddClientViewModel : ObservableObject
             Debug.WriteLine($"An error occurred while resetting the form: {ex.Message}");
         }
     }
+    private async Task ShowError(string message) =>
+      await App.Current.MainPage.DisplayAlert("Error", message, "OK");
+
+    private async Task ShowValidationError(string message) =>
+        await App.Current.MainPage.DisplayAlert("Validation", message, "OK");
+
+    private async Task<bool> ConfirmAction(string message) =>
+        await App.Current.MainPage.DisplayAlert("Confirm", message, "Yes", "No");
+
+    public void Dispose()
+    {
+        _undoStack.Clear();
+        Jobs.Clear();
+    }
+    
+
+    private async Task ShowSuccess(string message)
+    {
+        await App.Current.MainPage.DisplayAlert("Success", message, "OK");
+    }
+
+
 }

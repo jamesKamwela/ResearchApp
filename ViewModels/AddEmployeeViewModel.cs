@@ -8,6 +8,7 @@ using System.Diagnostics;
 using Microsoft.Maui.ApplicationModel.Communication;
 using CommunityToolkit.Mvvm.Messaging;
 using static ResearchApp.ViewModels.ContactsViewModel;
+using SQLite;
 
 
 namespace ResearchApp.ViewModels
@@ -19,7 +20,7 @@ namespace ResearchApp.ViewModels
         public AddEmployeeViewModel(IEmployeeDatabaseService databaseService)
         {
             _databaseService = databaseService;
-            //ResetDatabaseNow();
+            //await ResetDatabaseNow();
 
         }
 
@@ -39,20 +40,29 @@ namespace ResearchApp.ViewModels
         // Computed property to check if all fields are valid
 
    
-           public bool IsValid => ValidateEmployee(); // Client validation
+           public bool IsValid => ValidateEmployee().IsValid; // Client validation
 
-        private bool ValidateEmployee()
+        private (bool IsValid, string ErrorMessage) ValidateEmployee()
         {
-            // Validate client name
-            bool isClientNameValid = ValidationHelper.ValidateText(EmployeeName, minLength: 3, maxLength: 100);
+            if (string.IsNullOrWhiteSpace(EmployeeName))
+                return (false, "Name is required.");
 
-            // Validate client phone
-            bool isClientPhoneValid = ValidationHelper.ValidateNumber(EmployeePhone, isPhoneNumber: true);
+            if (EmployeeName.Length < 3 || EmployeeName.Length > 100)
+                return (false, "Name must be 3-100 characters.");
 
-            // Validate client address
-            bool isClientAddressValid = ValidationHelper.ValidateText(EmployeeAddress, minLength: 5, maxLength: 200);
+            if (string.IsNullOrWhiteSpace(EmployeePhone))
+                return (false, "Phone number is required.");
 
-            return isClientNameValid && isClientPhoneValid && isClientAddressValid;
+            if (!ValidationHelper.ValidateNumber(EmployeePhone, isPhoneNumber: true))
+                return (false, "Invalid phone number format.");
+
+            if (string.IsNullOrWhiteSpace(EmployeeAddress))
+                return (false, "Address is required.");
+
+            if (EmployeeAddress.Length < 5 || EmployeeAddress.Length > 200)
+                return (false, "Address must be 5-200 characters.");
+
+            return (true, null);
         }
 
 
@@ -99,16 +109,25 @@ namespace ResearchApp.ViewModels
         {
             try
             {
+                var validation = await Task.Run(() => ValidateEmployee());
                 // Ask the user for confirmation before saving
-                bool confirmSave = await App.Current.MainPage.DisplayAlert(
-                    "Confirm Save",
-                    "Are you sure you want to save this employee?",
-                    "Yes", "No");
-
-                if (!confirmSave)
+                await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    return;
-                }
+                    if (!validation.IsValid)
+                    {
+                        await App.Current.MainPage.DisplayAlert("Error", validation.ErrorMessage, "OK");
+                        return;
+                    }
+
+                    bool confirmSave = await App.Current.MainPage.DisplayAlert(
+                        "Confirm Save",
+                        "Are you sure you want to save this employee?",
+                        "Yes", "No");
+
+                    if (!confirmSave) return;
+                });
+
+                
 
                 // Create a new Employee object
                 var employee = new Employee
@@ -123,24 +142,57 @@ namespace ResearchApp.ViewModels
                 //await _databaseService.SaveEmployeeAsync(employee);
                 var newEmployee= await _databaseService.SaveEmployeeAsync(employee);
 
-                // Show success message
-                await App.Current.MainPage.DisplayAlert("Success", $"Employee saved successfully! Id: {employee.Id}", "OK");
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    // Clear form
+                    EmployeeName = string.Empty;
+                    EmployeeAddress = string.Empty;
+                    EmployeePhone = string.Empty;
 
-                // Clear the form
-                EmployeeName = string.Empty;
-                EmployeeAddress = string.Empty;
-                EmployeePhone = string.Empty;
+                    // Show success
+                    await App.Current.MainPage.DisplayAlert(
+                        "Success",
+                        $"Employee saved successfully! ID: {newEmployee.Id}",
+                        "OK");
 
-                WeakReferenceMessenger.Default.Send(new EmployeeAddedMessage(newEmployee));
-                // Navigate back after successful save
-                //MessagingCenter.Send<object>(this, "ContactAdded");
-                await Shell.Current.GoToAsync("..");
-                //await Shell.Current.GoToAsync("..", animate: false);
+                    // Send message
+                    WeakReferenceMessenger.Default.Send(new EmployeeAddedMessage(newEmployee));
 
+                    // Safely navigate back
+                    if (Shell.Current.Navigation.NavigationStack.Count > 1)
+                    {
+                        await Shell.Current.GoToAsync("..");
+                    }
+                    else
+                    {
+                        await Shell.Current.GoToAsync("//MainPage"); // Fallback
+                    }
+                });
+            
+
+            }
+            catch (SQLiteException ex) when (ex.Result == SQLite3.Result.Constraint)
+            {
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await App.Current.MainPage.DisplayAlert(
+                        "Error",
+                        "An employee with this phone number already exists.",
+                        "OK");
+                });
             }
             catch (Exception ex)
             {
-                await App.Current.MainPage.DisplayAlert("Error", $"Failed to save employee: {ex.Message}", "OK");
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await App.Current.MainPage.DisplayAlert(
+                        "Error",
+                        $"Failed to save employee: {ex.Message}",
+                        "OK");
+                });
+
+                // Log the full error for debugging
+                Debug.WriteLine($"SaveEmployee Error: {ex}");
             }
         }
        
