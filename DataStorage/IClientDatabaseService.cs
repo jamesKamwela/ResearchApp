@@ -14,6 +14,14 @@ namespace ResearchApp.DataStorage
         // Client operations
         Task<Client> GetLastClientAsync();
         Task<Client?> GetClientByDetailsAsync(string name, string phone, string address);
+        Task<Job> GetJobByIdAsync(int jobId);
+
+
+        Task<int> GetTotalClientCountAsync();
+        Task<bool> UpdateClientAsync(Client client);
+        Task<Client> GetClientMinusJobsWithId(int clientId);
+        Task<bool> UpdateJobAsync(Job job);
+        Task<int> DeleteJobAsync(Job job);
         Task<Client> SaveClientAsync(Client client);
         Task<List<Client>> GetClientsAsync();
         Task<List<Client>> GetClientsWithoutJobsAsync(int skip = 0, int take = 10);

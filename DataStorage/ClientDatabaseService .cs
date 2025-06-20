@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ResearchApp.Exceptions;
 namespace ResearchApp.DataStorage
 {
 
@@ -15,38 +16,43 @@ namespace ResearchApp.DataStorage
         private readonly SQLiteAsyncConnection _database;
         private readonly ILogger<ClientDatabaseService> _logger;
         private bool _isInitialized = false;
+        private readonly SemaphoreSlim _initLock = new SemaphoreSlim(1, 1);
+
+
 
         public ClientDatabaseService(string databasePath, ILogger<ClientDatabaseService> logger)
         {
 
             _database = new SQLiteAsyncConnection(databasePath, Constants.Flags);
+
             _logger = logger;
-            _ = InitializeDatabase();
 
         }
 
-        private async Task InitializeDatabase()
+        public async Task InitializeAsync()
         {
-            if (!_isInitialized)
+            if (_isInitialized) return;
+            await _initLock.WaitAsync();
+
+            try
             {
-                try
+                if (!_isInitialized)
                 {
+                    // Create tables (this will create single-column indexes from [Indexed] attributes)
                     await _database.CreateTableAsync<Client>();
                     await _database.CreateTableAsync<Job>();
-                    _logger.LogInformation("Database tables created successfully");
+
+                    await _database.ExecuteAsync(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_client ON Clients (Name, Phone, Address)");
+
+                    _logger.LogInformation("Database tables and indexes created successfully");
+
                     _isInitialized = true;
                 }
-                catch (SQLiteException sqlEx)
-                {
-                    _logger.LogError(sqlEx, "Error creating database tables");
-                    throw;
-                }
-
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "General error during database initialization");
-                    throw;
-                }
+            }
+            finally
+            {
+                _initLock.Release();
             }
         }
         public async Task ResetDatabaseAsync()
@@ -70,10 +76,94 @@ namespace ResearchApp.DataStorage
             }
         
         }
+
+
+
+
+        public async Task<bool> UpdateClientAsync(Client client)
+        {
+            if (client == null)
+            {
+                _logger?.LogWarning("Update failed: Client object is null");
+                return false;
+            }
+
+            try
+            {
+                // Direct update attempt without separate existence check
+                int rowsAffected = await _database.UpdateAsync(client);
+
+                if (rowsAffected == 1)
+                {
+                    _logger?.LogInformation("Client with ID {ClientId} updated successfully", client.Id);
+                    return true;
+                }
+
+                // If no rows affected, verify if client exists
+                var exists = await _database.Table<Client>()
+                    .Where(c => c.Id == client.Id)
+                    .CountAsync() > 0;
+
+                _logger?.LogWarning(exists ?
+                    $"Update affected {rowsAffected} rows (expected 1) for client ID {client.Id}" :
+                    $"Client with ID {client.Id} not found");
+
+                return false;
+            }
+            catch (SQLiteException ex) when (ex.Result == SQLite3.Result.Constraint)
+            {
+                _logger.LogError(ex, "Constraint violation updating client ID {ClientId}", client.Id);
+                throw new DataConstraintException(
+                    ex.Message.Contains("Phone")
+                        ? "Phone number must be unique"
+                        : "Database constraint violated",
+                    ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating client ID {ClientId}", client.Id);
+                throw new DatabaseOperationException("Failed to update client", ex);
+            }
+        }
+        public async Task<int> GetTotalClientCountAsync()
+        {
+            try
+            {
+                await InitializeAsync();
+
+                return await _database.Table<Client>().CountAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting total client count");
+                Debug.WriteLine($"Error getting client count: {ex.Message}");
+                return 0; // Return 0 if there's an error
+            }
+        }
+        public async Task<Job> GetJobByIdAsync(int jobId)
+        {
+            try
+            {
+                await InitializeAsync();
+                var job = await _database.Table<Job>()
+                    .FirstOrDefaultAsync(j => j.Id == jobId);
+                if (job != null)
+                {
+                    job.ClientId = job.ClientId; // Ensure ClientId is set
+                }
+                return job;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error fetching job with ID: {jobId}");
+                throw;
+            }
+        }
         public async Task<Client> GetLastClientAsync()
         {
             try
             {
+                await InitializeAsync();
                 // Fetch the last client based on the highest ID
                 var lastClient = await _database.Table<Client>()
                                                 .OrderByDescending(c => c.Id)
@@ -96,26 +186,61 @@ namespace ResearchApp.DataStorage
                 throw;
             }
         }
-     
+        public async Task<int> DeleteJobAsync(Job job)
+        {
+            try
+            {
+                await InitializeAsync();
 
-   
+                // First verify the job exists
+                var existingJob = await _database.Table<Job>()
+                    .FirstOrDefaultAsync(j => j.Id == job.Id);
+
+                if (existingJob == null)
+                {
+                    _logger.LogWarning($"No job found with ID: {job.Id}");
+                    return 0;
+                }
+
+                // Delete the job
+                var result = await _database.DeleteAsync(job);
+
+                if (result > 0)
+                {
+                    _logger.LogInformation($"Successfully deleted job with ID: {job.Id}");
+                }
+                else
+                {
+                    _logger.LogWarning($"No rows affected when deleting job with ID: {job.Id}");
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting job with ID: {job.Id}");
+                throw;
+            }
+        }
+
+
+
         public async Task<Client?> GetClientByDetailsAsync(string name, string phone, string address)
         {
             try
             {
+                await InitializeAsync();
+
                 var normalizedName = name?.Trim().ToLowerInvariant();
-                var normalizedPhone = phone?.Trim().ToLowerInvariant();
+                var normalizedPhone = NormalizePhone(phone);
                 var normalizedAddress = address?.Trim().ToLowerInvariant();
 
                 var existingClient = await _database.Table<Client>()
+                    .Where(c => c.Name != null && c.Phone != null && c.Address != null)
                     .FirstOrDefaultAsync(c =>
                         c.Name.Trim().ToLowerInvariant() == normalizedName &&
-                        c.Phone.Trim().ToLowerInvariant() == normalizedPhone &&
+                        NormalizePhone(c.Phone) == normalizedPhone &&
                         c.Address.Trim().ToLowerInvariant() == normalizedAddress);
-
-                _logger.LogInformation(existingClient != null
-                    ? $"Found existing client with ID: {existingClient.Id}"
-                    : "No matching client found");
 
                 return existingClient;
             }
@@ -126,56 +251,102 @@ namespace ResearchApp.DataStorage
             }
         }
 
-        
+        private string NormalizePhone(string phone)
+        {
+            return new string(phone?.Where(char.IsDigit).ToArray()) ?? string.Empty;
+        }
+
+
 
 
         public async Task<Client> SaveClientAsync(Client client)
         {
+            if (client == null)
+            {
+                throw new ArgumentNullException(nameof(client));
+            }
+
             try
             {
-                // Use a transaction to ensure atomicity
-                await _database.RunInTransactionAsync(async connection =>
+                await InitializeAsync();
+
+                client.Name = client.Name?.Trim().ToLowerInvariant();
+                await _database.RunInTransactionAsync(async conn =>
                 {
+                    // Save the client first
                     if (client.Id == 0)
                     {
-                        await _database.InsertAsync(client);
+                        conn.Insert(client);
                         _logger.LogInformation($"Inserted new client with ID: {client.Id}");
                     }
                     else
                     {
-                        await _database.UpdateAsync(client);
+                        conn.Update(client);
                         _logger.LogInformation($"Updated existing client with ID: {client.Id}");
                     }
+
+                    // Then handle jobs if they exist
                     if (client.Jobs != null && client.Jobs.Count > 0)
                     {
+
                         foreach (var job in client.Jobs)
                         {
+                            // Ensure the job is linked to the client
                             job.ClientId = client.Id;
+
                             if (job.Id == 0)
-                                await _database.InsertAsync(job);
+                            {
+                                conn.Insert(job);
+                            }
                             else
-                                await _database.UpdateAsync(job);
+                            {
+                                conn.Update(job);
+                            }
                         }
                         _logger.LogInformation($"Saved {client.Jobs.Count} jobs for client {client.Id}");
                     }
                 });
 
                 return client;
-           
             }
-            catch (Exception ex)
+            
+            catch (SQLiteException ex) when (ex.Result == SQLite3.Result.Constraint)
             {
-                _logger.LogError(ex, $"Error saving client with ID: {client.Id}");
-                throw;
+                _logger.LogWarning("Duplicate client detected");
+                return await _database.Table<Client>()
+                    .FirstOrDefaultAsync(c =>
+                        c.Name == client.Name &&
+                        c.Phone == client.Phone &&
+                        c.Address == client.Address);
             }
         }
+
 
         public async Task SaveJobsAsync(List<Job> jobs)
         {
             try
             {
-                await _database.InsertAllAsync(jobs); // Saves all jobs in one operation
-                _logger.LogInformation($"Saved {jobs.Count} jobs");
+                if (jobs == null || jobs.Count == 0)
+                {
+                    _logger.LogWarning("Null/empty job list received");
+                    return; // Early exit for no-ops
+                }
+                var invalidJobs = jobs.Where(j =>
+                      j.ClientId <= 0 ||
+                      string.IsNullOrWhiteSpace(j.JobName) ||
+                      j.Amount <= 0
+                  ).ToList();
+
+                if (invalidJobs.Any())
+                {
+                    _logger.LogError($"Invalid jobs detected: {invalidJobs.Count}");
+                    throw new ArgumentException("Jobs violate database constraints");
+                }
+                await _database.RunInTransactionAsync(async connection =>
+                {
+                    await _database.InsertAllAsync(jobs);
+                    _logger.LogInformation($"Saved {jobs.Count} jobs for client {jobs[0].ClientId}");
+                });
             }
             catch (Exception ex)
             {
@@ -184,10 +355,14 @@ namespace ResearchApp.DataStorage
             }
         }
 
+
+
         public async Task<List<Client>> GetClientsAsync()
         {
             try
             {
+                await InitializeAsync();
+
                 var clients = await _database.Table<Client>().ToListAsync();
 
                 // Fetch and assign jobs for each client
@@ -208,6 +383,8 @@ namespace ResearchApp.DataStorage
         {
             try
             {
+                await InitializeAsync();
+
                 var client = await _database.Table<Client>()
                     .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -230,10 +407,34 @@ namespace ResearchApp.DataStorage
                 throw;
             }
         }
+        public async Task<Client> GetClientMinusJobsWithId(int clientId)
+        {
+            try
+            {
+                await InitializeAsync();
+                var client = await _database.Table<Client>()
+                    .FirstOrDefaultAsync(c => c.Id == clientId);
+                if (client != null)
+                {
+                    client.Jobs = new List<Job>(); // Clear jobs
+                }
+                _logger.LogInformation(client != null
+                    ? $"Retrieved client with ID: {clientId} without jobs"
+                    : $"Client with ID: {clientId} not found");
+                return client;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error fetching client with ID: {clientId}");
+                throw;
+            }
+        }
         public async Task<List<Job>> GetJobsByClientIdAsync(int clientId)
         {
             try
             {
+                await InitializeAsync();
+
                 // Fetch all jobs for the specified client ID
                 var jobs = await _database.Table<Job>()
                                           .Where(j => j.ClientId == clientId)
@@ -252,6 +453,8 @@ namespace ResearchApp.DataStorage
         {
             try
             {
+                await InitializeAsync();
+
                 var clients = await _database.Table<Client>()
                     .OrderBy(c => c.Name)
                     .Skip(skip)
@@ -267,11 +470,58 @@ namespace ResearchApp.DataStorage
                 throw;
             }
         }
+        public async Task<bool> UpdateJobAsync(Job job)
+        {
+            if (job == null)
+            {
+                _logger?.LogWarning("Update failed: Job object is null");
+                return false;
+            }
+
+            try
+            {
+                await InitializeAsync();
+
+                // First verify the job exists
+                var existingJob = await _database.Table<Job>()
+                    .FirstOrDefaultAsync(j => j.Id == job.Id);
+
+                if (existingJob == null)
+                {
+                    _logger?.LogWarning($"Job with ID {job.Id} not found");
+                    return false;
+                }
+
+                // Perform the update
+                int rowsAffected = await _database.UpdateAsync(job);
+
+                if (rowsAffected == 1)
+                {
+                    _logger?.LogInformation("Job with ID {JobId} updated successfully", job.Id);
+                    return true;
+                }
+
+                _logger?.LogWarning($"Update affected {rowsAffected} rows (expected 1) for job ID {job.Id}");
+                return false;
+            }
+            catch (SQLiteException ex) when (ex.Result == SQLite3.Result.Constraint)
+            {
+                _logger.LogError(ex, "Constraint violation updating job ID {JobId}", job.Id);
+                throw new DataConstraintException("Database constraint violated", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating job ID {JobId}", job.Id);
+                throw new DatabaseOperationException("Failed to update job", ex);
+            }
+        }
 
         public async Task<int> DeleteClientAsync(Client client)
         {
             try
             {
+                await InitializeAsync();
+
                 await _database.Table<Job>().DeleteAsync(j => j.ClientId == client.Id);
                 var result = await _database.DeleteAsync(client);
 
@@ -284,5 +534,7 @@ namespace ResearchApp.DataStorage
                 throw;
             }
         }
+       
     }
+
 }
