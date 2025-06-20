@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<!--<TargetFrameworks>net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks>-->
+		<TargetFrameworks>net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
 		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net9.0-tizen</TargetFrameworks> -->
@@ -19,8 +19,7 @@
 		<SingleProject>true</SingleProject>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<EnableEfCoreDesignTimeServices>true</EnableEfCoreDesignTimeServices>
-		<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+
 		<!-- Display name -->
 		<ApplicationTitle>ResearchApp</ApplicationTitle>
 
@@ -40,12 +39,8 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
-		
-	
-  <EnableEfCoreDesignTimeServices>true</EnableEfCoreDesignTimeServices>
-  <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-  <InvariantGlobalization>true</InvariantGlobalization>
-</PropertyGroup>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<!-- App Icon -->
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
@@ -65,33 +60,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Remove="EFDatabase\**" />
-	  <EmbeddedResource Remove="EFDatabase\**" />
-	  <MauiCss Remove="EFDatabase\**" />
-	  <MauiXaml Remove="EFDatabase\**" />
-	  <None Remove="EFDatabase\**" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="CommunityToolkit.Maui" Version="11.2.0" />
-		<PackageReference Include="CommunityToolkit.Maui.Markup" Version="5.1.0" />
+		<PackageReference Include="CommunityToolkit.Maui" Version="11.1.0" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
-		<PackageReference Include="Microcharts.Maui" Version="1.0.0" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.60" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.40" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
 		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
-
-	
 	</ItemGroup>
 
 	<ItemGroup>
-	  <MauiXaml Update="Cards\EmployeeSummaryCard.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\ActiveEmployees.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
 	  <MauiXaml Update="Views\AddClient.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
@@ -104,25 +80,7 @@
 	  <MauiXaml Update="Views\Dashboard.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Views\DirectoryPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\EditClient.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\EditEmployee.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\EditJobPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\EmployeeWeeklyJobsList.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
 	  <MauiXaml Update="Views\Isvar.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="Views\PendingJobs.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\Profile.xaml">
@@ -131,7 +89,7 @@
 	  <MauiXaml Update="Views\Settings.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Views\TestTabbedPage.xaml">
+	  <MauiXaml Update="Views\UpdateClientxaml.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\UpdateEmployee.xaml">
@@ -143,18 +101,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Selectors\" />
 	  <Folder Include="Services\" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Compile Update="Views\DirectoryPage.xaml.cs">
-	    <DependentUpon>DirectoryPage.xaml</DependentUpon>
-	  </Compile>
-	  <Compile Update="Views\EditEmployee.xaml.cs">
-	    <DependentUpon>EditEmployee.xaml</DependentUpon>
-	  </Compile>
-	</ItemGroup>
-
-	
 </Project>
