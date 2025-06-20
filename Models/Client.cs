@@ -1,4 +1,5 @@
-﻿using SQLite;
+﻿using ResearchApp.DataStorage;
+using SQLite;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,12 +8,25 @@ using System.Threading.Tasks;
 
 namespace ResearchApp.Models
 {
-     public class Client
+    [Table("Clients")]
+    public class Client : IEntity, IAuditable
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
-        public string? Name { get; set; }
+
+        private string _name;
+        [Indexed]
+        public string? Name
+        {
+            get => _name;
+            set => _name = value?.Trim().ToLowerInvariant();
+        }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        [Indexed]
         public string? Phone { get; set; }
+
+        [Indexed]
         public string? Address { get; set; }
     
         [Ignore]
