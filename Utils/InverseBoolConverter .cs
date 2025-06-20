@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using ResearchApp.ViewModels;
 using System.Collections;
+using ResearchApp.Models;
 
 namespace ResearchApp.Utils
 {
@@ -50,6 +51,7 @@ namespace ResearchApp.Utils
             => value is bool isSelected && isSelected ? parameter : null;
     }
 
+
     #endregion
 
     #region Event Converters
@@ -85,5 +87,242 @@ namespace ResearchApp.Utils
     }
     #endregion
 
+    public class ItemTappedEventArgsConverter : OneWayConverter
+    {
+        public override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is ItemTappedEventArgs eventArgs)
+            {
+                return eventArgs.Item;
+            }
+            return null;
+        }
+
+        // No need to override ConvertBack since OneWayConverter provides default implementation
+    }
+
+
+    public class BoolToObjectConverter : OneWayConverter
+    {
+        public object? TrueValue { get; set; }
+        public object? FalseValue { get; set; }
+        public override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+            {
+                return boolValue ? TrueValue : FalseValue;
+            }
+            return null;
+        }
+
+    }
+
+    public class BoolToColorConverter : OneWayConverter
+    {
+        public Color TrueColor { get; set; } 
+        public Color FalseColor { get; set; } 
+        public override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+            {
+                return boolValue ? TrueColor : FalseColor;
+            }
+            return Colors.Transparent; // Default color if not a boolean
+        }
+    }
+    public class BoolToTextColorConverter : OneWayConverter
+    {
+        public Color TrueColor { get; set; } 
+        public Color FalseColor { get; set; } 
+        public override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+            {
+                return boolValue ? TrueColor : FalseColor;
+            }
+            return Colors.Transparent; // Default color if not a boolean
+        }
+    }
+    public class BoolToEmptyViewConverter : OneWayConverter
+    {
+        public override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+            {
+                return boolValue ? "No jobs available" : null;
+            }
+            return null;
+        }
+    }
+    public class NullToBoolCovertor : OneWayConverter
+    {
+        public override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value != null;
+            
+        }
+    }
+      
+    public class BoolToVisibilityConverter : OneWayConverter
+    {
+        public override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+            {
+                return boolValue ? "Visible" : "Collapsed";
+            }
+            return "Collapsed"; // Default to Collapsed if not a boolean
+        }
+    }
+    public class StringEqualsConverter : OneWayConverter
+    {
+        public override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is string strValue && parameter is string compareTo)
+            {
+                return string.Equals(strValue, compareTo, StringComparison.OrdinalIgnoreCase);
+            }
+            return false; // Default to false if types don't match
+        }
+    }
+
+    public class CustomPeriodVisibilityConverter: OneWayConverter
+    {
+        public override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is string period && parameter is string compareTo)
+            {
+                return string.Equals(period, compareTo, StringComparison.OrdinalIgnoreCase) ? "Visible" : "Collapsed";
+            }
+            return "Collapsed"; // Default to Collapsed if types don't match
+        }
+    }
+    public class NullToBoolConverter : OneWayConverter
+    {
+        public override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value == null;
+        }
+    }
+
+
+    public class IndexToColorConverter : OneWayConverter
+    {
+        public override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            // Safely get the index
+            if (value is not int index)
+            {
+                return GetDefaultColor();
+            }
+
+            // Determine which color resource to use
+            var resourceKey = index % 2 == 0
+                ? "TableRowBackgroundColor"
+                : "TableRowAltBackgroundColor";
+
+            // Try to get the color resource
+            if (Application.Current?.Resources?.TryGetValue(resourceKey, out var color) == true)
+            {
+                return color;
+            }
+
+            // Fallback to default color
+            return GetDefaultColor();
+        }
+
+        private object GetDefaultColor()
+        {
+            // First try the default row color
+            if (Application.Current?.Resources?.TryGetValue("TableRowBackgroundColor", out var defaultColor) == true)
+            {
+                return defaultColor;
+            }
+
+            // Ultimate fallback
+            return Colors.White;
+        }
+    }
+    public class RowToBoolConverter : OneWayConverter
+    {
+        public override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int row)
+            {
+                return row % 2 == 1; // Returns true for odd rows (alternate)
+            }
+            return false;
+        }
+
+    }
+    public class ItemToIndexConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values.Length >= 2 && values[0] != null && values[1] is IList list)
+            {
+                var item = values[0];
+                var index = list.IndexOf(item);
+
+                if (index >= 0)
+                {
+                    // Determine which color resource to use
+                    var resourceKey = index % 2 == 0
+                        ? "TableRowBackgroundColor"
+                        : "TableRowAltBackgroundColor";
+
+                    // Try to get the color resource
+                    if (Application.Current?.Resources?.TryGetValue(resourceKey, out var color) == true)
+                    {
+                        return color;
+                    }
+                }
+            }
+
+            return GetDefaultColor();
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+
+        private object GetDefaultColor()
+        {
+            // First try the default row color
+            if (Application.Current?.Resources?.TryGetValue("TableRowBackgroundColor", out var defaultColor) == true)
+            {
+                return defaultColor;
+            }
+            // Ultimate fallback
+            return Colors.White;
+        }
+    }
+
+    public class RowToColorConverter : IValueConverter
+    {
+        public Color EvenRowColor { get; set; } = Colors.White;
+        public Color OddRowColor { get; set; } = Color.FromArgb("#F9F9F9");
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is int row)
+            {
+                return row % 2 == 0 ? EvenRowColor : OddRowColor;
+            }
+            return EvenRowColor;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }
+
+    
+
+
+
+
 
