@@ -7,6 +7,7 @@ namespace ResearchApp
         // Database file names
         public const string EmployeesDatabaseFilename = "Employees.db3";
         public const string ClientsDatabaseFilename = "Clients.db3";
+        public const string WorkRecordDatabaseFilename = "WorkRecord.db3";
 
         // Database paths
         public static string EmployeesDatabasePath =>
@@ -14,6 +15,11 @@ namespace ResearchApp
 
         public static string ClientsDatabasePath =>
             Path.Combine(FileSystem.AppDataDirectory, ClientsDatabaseFilename);
+
+        public static string WorkRecordDatabasePath =>
+            Path.Combine(FileSystem.AppDataDirectory, WorkRecordDatabaseFilename);
+
+      
 
         // SQLite connection flags
         public const SQLiteOpenFlags Flags =

@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ResearchApp.Views.ClientWorkRecordsData"
+             xmlns:viewmodels="clr-namespace:ResearchApp.ViewModels"
+             xmlns:models="clr-namespace:ResearchApp.Models"
+             xmlns:converters="clr-namespace:ResearchApp.Utils"
+             x:DataType="viewmodels:ClientWorkRecordsDataViewModel"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <!-- Add this with your other resources -->
+            <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+        <ResourceDictionary>
+            <!-- Colors -->
+            <Color x:Key="PrimaryColor">#2196F3</Color>
+            <Color x:Key="SecondaryColor">#FFC107</Color>
+            <Color x:Key="SurfaceColor">#FFFFFF</Color>
+            <Color x:Key="OnSurfaceColor">#212121</Color>
+            <Color x:Key="OnSurfaceVariantColor">#757575</Color>
+            <Color x:Key="OutlineColor">#E0E0E0</Color>
+            <Color x:Key="ErrorColor">#F44336</Color>
+            <Color x:Key="SuccessColor">#4CAF50</Color>
+
+            <!-- Styles -->
+            <Style x:Key="CardStyle" TargetType="Frame">
+                <Setter Property="BackgroundColor" Value="{StaticResource SurfaceColor}" />
+                <Setter Property="HasShadow" Value="True" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="Padding" Value="16" />
+                <Setter Property="Margin" Value="8" />
+            </Style>
+
+            <Style x:Key="HeaderTextStyle" TargetType="Label">
+                <Setter Property="FontSize" Value="24" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="TextColor" Value="{StaticResource OnSurfaceColor}" />
+                <Setter Property="Margin" Value="0,0,0,8" />
+            </Style>
+
+            <Style x:Key="SubheaderTextStyle" TargetType="Label">
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="TextColor" Value="{StaticResource OnSurfaceColor}" />
+                <Setter Property="Margin" Value="0,0,0,4" />
+            </Style>
+
+            <Style x:Key="BodyTextStyle" TargetType="Label">
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="TextColor" Value="{StaticResource OnSurfaceVariantColor}" />
+                <Setter Property="LineBreakMode" Value="WordWrap" />
+            </Style>
+
+            <Style x:Key="CaptionTextStyle" TargetType="Label">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="TextColor" Value="{StaticResource OnSurfaceVariantColor}" />
+            </Style>
+
+            <Style x:Key="ValueTextStyle" TargetType="Label">
+                <Setter Property="FontSize" Value="20" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="TextColor" Value="{StaticResource PrimaryColor}" />
+                <Setter Property="HorizontalTextAlignment" Value="Center" />
+            </Style>
+
+            <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource PrimaryColor}" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="Padding" Value="16,12" />
+                <Setter Property="Margin" Value="8" />
+            </Style>
+        </ResourceDictionary>
+    </ContentView.Resources>
+
+    <Grid>
+        <ScrollView>
+            <StackLayout Spacing="0" Padding="16">
+
+                <!-- Header Section -->
+                <Frame Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+                    <StackLayout Spacing="16">
+                        <Label Text="Client Work Records Analytics" 
+                               Style="{StaticResource HeaderTextStyle}" 
+                               HorizontalTextAlignment="Center" />
+
+                        <!-- Period Selection -->
+                        <StackLayout Spacing="8">
+                            <Label Text="Time Period" 
+                                   Style="{StaticResource SubheaderTextStyle}" />
+                            <Picker x:Name="PeriodPicker"
+                                    ItemsSource="{Binding PeriodOptions}"
+                                    SelectedItem="{Binding SelectedPeriod}"
+                                    BackgroundColor="{StaticResource SurfaceColor}"
+                                    TextColor="{StaticResource OnSurfaceColor}"
+                                    FontSize="14">
+                            </Picker>
+                        </StackLayout>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Summary Cards -->
+                <Grid ColumnDefinitions="*,*" 
+                      RowDefinitions="Auto" 
+                      ColumnSpacing="8"
+                      Margin="0,0,0,16">
+
+                    <!-- Total Jobs Card -->
+                    <Frame Grid.Column="0" 
+                           Style="{StaticResource CardStyle}"
+                           Margin="0">
+                        <StackLayout Spacing="8">
+                            <Label Text="Total Jobs" 
+                                   Style="{StaticResource CaptionTextStyle}"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Text="{Binding TotalJobs, StringFormat='{0:N0}'}" 
+                                   Style="{StaticResource ValueTextStyle}" />
+                        </StackLayout>
+                    </Frame>
+
+                    <!-- Total Revenue Card -->
+                    <Frame Grid.Column="1" 
+                           Style="{StaticResource CardStyle}"
+                           Margin="0">
+                        <StackLayout Spacing="8">
+                            <Label Text="Total Revenue" 
+                                   Style="{StaticResource CaptionTextStyle}"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Text="{Binding TotalRevenue, StringFormat='{0:N2} ₺'}" 
+                                   Style="{StaticResource ValueTextStyle}" />
+                        </StackLayout>
+                    </Frame>
+                </Grid>
+
+                <!-- Status Message -->
+                <Label Text="{Binding StatusMessage}" 
+                       Style="{StaticResource BodyTextStyle}"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,0,0,16"
+                       IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+
+                <!-- Client Statistics List -->
+                <Frame Style="{StaticResource CardStyle}"
+                       IsVisible="{Binding HasData}">
+                        <CollectionView ItemsSource="{Binding ClientStats}"
+                                        SelectionMode="Single"
+                                        BackgroundColor="Transparent">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:ClientCompletionStats">
+                                    <Grid Padding="0.8">
+                                        <Border BackgroundColor="{StaticResource SurfaceColor}"
+                                                StrokeShape="RoundRectangle 8"
+                                                Stroke="{StaticResource OutlineColor}"
+                                                StrokeThickness="1"
+                                                Margin="0,4">
+                                            <Grid ColumnDefinitions="*,10*,Auto" 
+                                                  RowDefinitions="Auto,Auto"
+                                                  Padding="16,12"
+                                                  ColumnSpacing="12"
+                                                  RowSpacing="4">
+
+                                                <!-- Add TapGestureRecognizer to make the entire grid clickable -->
+                                                <Grid.GestureRecognizers>
+                                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ClientWorkRecordsDataViewModel}},
+                                                        Path=ClientClickedCommand}"
+                                                                          CommandParameter="{Binding .}" />
+                                                </Grid.GestureRecognizers>
+
+                                                <!-- Client Name -->
+                                                <Label Grid.Column="0" 
+                                                       Grid.Row="0"
+                                                       Text="{Binding ClientName}" 
+                                                       Style="{StaticResource SubheaderTextStyle}"
+                                                       FontSize="16"
+                                                       VerticalOptions="Center" />
+
+                                                <!-- Jobs Count -->
+                                                <StackLayout Grid.Column="1" 
+                                                           Grid.Row="0"
+                                                           Orientation="Vertical"
+                                                           Spacing="2">
+                                                    <Label Text="{Binding CompletedJobsCount, StringFormat='{0:N0}'}" 
+                                                           Style="{StaticResource ValueTextStyle}"
+                                                           FontSize="16"
+                                                           TextColor="{StaticResource SuccessColor}" />
+                                                    <Label Text="Jobs" 
+                                                           Style="{StaticResource CaptionTextStyle}"
+                                                           HorizontalTextAlignment="Center" />
+                                                </StackLayout>
+
+                                                <!-- Total Earnings -->
+                                                <StackLayout Grid.Column="2" 
+                                                           Grid.Row="0"
+                                                           Orientation="Vertical"
+                                                           Spacing="2">
+                                                    <Label Text="{Binding TotalEarnings, StringFormat='{0} ₺'}" 
+                                                           Style="{StaticResource ValueTextStyle}"
+                                                           FontSize="16"
+                                                           TextColor="{StaticResource PrimaryColor}" />
+                                                    <Label Text="Revenue" 
+                                                           Style="{StaticResource CaptionTextStyle}"
+                                                           HorizontalTextAlignment="Center" />
+                                                </StackLayout>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                </Frame>
+
+                <!-- Empty State -->
+                <StackLayout IsVisible="{Binding HasData, Converter={StaticResource InvertedBoolConverter}}"
+                             Spacing="16"
+                             Padding="32"
+                             HorizontalOptions="Center">
+                    <Label Text="📊" 
+                           FontSize="64"
+                           HorizontalTextAlignment="Center" />
+                    <Label Text="No Data Available" 
+                           Style="{StaticResource SubheaderTextStyle}"
+                           HorizontalTextAlignment="Center" />
+                    <Label Text="Select a different time period or add some completed work records to see client statistics." 
+                           Style="{StaticResource BodyTextStyle}"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+
+            </StackLayout>
+        </ScrollView>
+
+        <!-- Loading Overlay -->
+        <Grid IsVisible="{Binding IsLoading}"
+              BackgroundColor="#80000000">
+            <Frame BackgroundColor="{StaticResource SurfaceColor}"
+                   CornerRadius="16"
+                   Padding="32"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center">
+                <StackLayout Spacing="16" 
+                             HorizontalOptions="Center">
+                    <ActivityIndicator IsRunning="True"
+                                       Color="{StaticResource PrimaryColor}"
+                                       Scale="1.5" />
+                    <Label Text="Loading client data..." 
+                           Style="{StaticResource BodyTextStyle}"
+                           HorizontalTextAlignment="Center" />
+                </StackLayout>
+            </Frame>
+        </Grid>
+    </Grid>
+
+</ContentView>

@@ -1,12 +1,120 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:ResearchApp.Models;assembly=ResearchApp"
+             xmlns:converters="clr-namespace:ResearchApp.Utils"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="ResearchApp.Views.Dashboard"
+             xmlns:viewmodels="clr-namespace:ResearchApp.ViewModels"
+             xmlns:chart="clr-namespace:Microcharts.Maui;assembly=Microcharts.Maui"
+             x:DataType="viewmodels:DashboardViewModel"
              Title="Dashboard">
-    <VerticalStackLayout>
-        <Label 
-            Text="Welcome to .NET MAUI!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
-    </VerticalStackLayout>
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    <RefreshView IsRefreshing="{Binding IsLoading}"
+                 Command="{Binding RefreshCommand}">
+        <ScrollView>
+            <VerticalStackLayout>
+                <Picker 
+                    Title="Select Time Period"
+                    ItemsSource="{Binding PeriodOptions}"
+                    SelectedItem="{Binding SelectedPeriod, Mode=TwoWay}"
+                    Margin="10,5"
+                    WidthRequest="150"
+                    HorizontalOptions="End">
+                </Picker>
+                <Grid ColumnDefinitions="*, *,*"
+                      RowDefinitions="Auto,*,Auto"
+                      ColumnSpacing="1"
+                      RowSpacing="1">
+                    <Frame Padding="15"
+                           Grid.Column="1"
+                           Grid.Row="0"
+                           WidthRequest="300"
+                           HeightRequest="450"
+                           BackgroundColor="{DynamicResource CardBackground}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Contact Distribution" 
+                                   FontSize="18"
+                                   HorizontalOptions="Center"
+                                   FontAttributes="Bold"/>
+                            <chart:ChartView Chart="{Binding ContactDistributionChart}" 
+                                             HeightRequest="350"/>
+                            <!-- Legend -->
+                            <HorizontalStackLayout HorizontalOptions="Center" Spacing="20">
+                                <HorizontalStackLayout Spacing="5">
+                                    <BoxView Color="#FF6B35" WidthRequest="20" HeightRequest="20"/>
+                                    <Label Text="{Binding TotalEmployees, StringFormat='Employees ({0})'}"/>
+                                </HorizontalStackLayout>
+                                <HorizontalStackLayout Spacing="5">
+                                    <BoxView Color="#00D4FF" WidthRequest="20" HeightRequest="20"/>
+                                    <Label Text="{Binding TotalClients, StringFormat='Clients ({0})'}"/>
+                                </HorizontalStackLayout>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Frame>
+                    <!-- Completed Jobs Table (column 1, row 1) -->
+                    <Frame Grid.Column="1"
+                           Grid.Row="1"
+                           Margin="0,10,0,0"
+                           Padding="10"
+                           BackgroundColor="{DynamicResource CardBackground}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Completed Jobs" 
+                                   FontSize="18"
+                                   HorizontalOptions="Center"
+                                   FontAttributes="Bold"/>
+
+                            <!-- Table Header -->
+                            <Grid ColumnDefinitions="*,*,*,*"
+                                  ColumnSpacing="5"
+                                  Padding="0,0,0,5">
+                                <Label Text="Client" 
+                                       Grid.Column="0"
+                                       FontAttributes="Bold"/>
+                                <Label Text="Job" 
+                                       Grid.Column="1"
+                                       FontAttributes="Bold"/>
+                                <Label Text="Amount" 
+                                       Grid.Column="2"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="End"/>
+                                <Label Text="Employees" 
+                                       Grid.Column="3"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="End"/>
+                            </Grid>
+                            <!-- Table Rows - Bound to CompletedJobs collection -->
+                            <CollectionView ItemsSource="{Binding CompletedJobs}">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="models:WorkRecord">
+                                        <Grid ColumnDefinitions="*,*,*,*"
+                                              ColumnSpacing="5"
+                                              Padding="0,5">
+                                            <Label Text="{Binding DisplayClientName}" 
+                                                   Grid.Column="0"/>
+                                            <Label Text="{Binding DisplayJobName}" 
+                                                   Grid.Column="1"/>
+                                            <Label Text="{Binding TotalAmount, StringFormat='{0:} TL'}" 
+                                                   Grid.Column="2"
+                                                   HorizontalTextAlignment="End"/>
+                                            <Label Text="{Binding EmployeeCount}" 
+                                                   Grid.Column="3"
+                                                   HorizontalTextAlignment="End"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+                    </Frame>
+                </Grid>
+                    
+            </VerticalStackLayout>
+                
+        </ScrollView>
+    </RefreshView>
+
 </ContentPage>

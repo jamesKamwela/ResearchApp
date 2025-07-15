@@ -3,67 +3,115 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="ResearchApp.Views.EditEmployee"
              xmlns:behaviors="clr-namespace:CommunityToolkit.Maui.Behaviors;assembly=CommunityToolkit.Maui"
+             xmlns:viewModel="clr-namespace:ResearchApp.ViewModels"
+             xmlns:converters="clr-namespace:ResearchApp.Utils"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              Title="Edit Employee">
 
     <ContentPage.Resources>
-        <!-- Define styles for valid and invalid entries -->
-        <Style x:Key="ValidEntryStyle" TargetType="Entry">
-            <Setter Property="TextColor" Value="Black" />
-        </Style>
-        <Style x:Key="InvalidEntryStyle" TargetType="Entry">
-            <Setter Property="TextColor" Value="Red" />
-        </Style>
+        <ResourceDictionary>
+            <Style x:Key="SectionHeader" TargetType="Label">
+                <Setter Property="FontSize" Value="20"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="Margin" Value="0,20,0,10"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#2C3E50, Dark=#ECF0F1}"/>
+            </Style>
+
+            <Style x:Key="FormLabel" TargetType="Label">
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Margin" Value="0,5,0,0"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#34495E, Dark=#BDC3C7}"/>
+            </Style>
+
+            <Style x:Key="ValidEntry" TargetType="Entry">
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}"/>
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FAFAFA, Dark=#2D2D2D}"/>
+            </Style>
+
+            <Style x:Key="InvalidEntry" TargetType="Entry">
+                <Setter Property="TextColor" Value="Red"/>
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFF0F0, Dark=#3D1E1E}"/>
+            </Style>
+
+            <Style x:Key="BaseButton" TargetType="Button">
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="15,10"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Margin" Value="5"/>
+                <Setter Property="TextColor" Value="White"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+            </Style>
+
+            <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="#3498db"/>
+            </Style>
+
+            <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="#2980b9"/>
+            </Style>
+
+            <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#e74c3c, Dark=#c0392b}"/>
+            </Style>
+        </ResourceDictionary>
     </ContentPage.Resources>
-    
-    <VerticalStackLayout>
-        <Border Stroke="Transparent" BackgroundColor="White" Margin="10" WidthRequest="500"
-                HorizontalOptions="Start" Padding="10,10,10,10">
-            <StackLayout Padding="15">
-                
-                <HorizontalStackLayout>
-                    <Label Text="Name: " FontSize="16" FontAttributes="Bold" />
-                    <Entry  Text="{Binding Name}" FontSize="14" FontAttributes="Bold" Margin="3,2.5,0,2">
-                        <Entry.Behaviors>
-                            <behaviors:TextValidationBehavior
-                           InvalidStyle="{StaticResource InvalidEntryStyle}"
-                           ValidStyle="{StaticResource ValidEntryStyle}"
-                           Flags="ValidateOnValueChanged"
-                           MaximumLength="100"
-                           MinimumLength="3" />
-                        </Entry.Behaviors>
-                    </Entry>
-                </HorizontalStackLayout>
-                    
-                <HorizontalStackLayout>
-                    <Label Text="Phone: " FontSize="16" FontAttributes="Bold" />
-                    <Entry Text="{Binding Phone}" FontSize="14" Margin="3,2.5,0,2">
-                        <Entry.Behaviors>
-                            <behaviors:TextValidationBehavior
-                        InvalidStyle="{StaticResource InvalidEntryStyle}"
-                        ValidStyle="{StaticResource ValidEntryStyle}"
-                        Flags="ValidateOnValueChanged"
-                        RegexPattern="^\d{10,15}$" />
-                        </Entry.Behaviors>
-                    </Entry>
-                </HorizontalStackLayout>
-                <HorizontalStackLayout>
-                    <Label Text="Address: " FontSize="16" FontAttributes="Bold" />
-                    <Entry  Text="{Binding Address}" FontSize="14" FontAttributes="Bold" Margin="3,2.5,0,2">
-                        <Entry.Behaviors>
-                            <behaviors:TextValidationBehavior
-                           InvalidStyle="{StaticResource InvalidEntryStyle}"
-                           ValidStyle="{StaticResource ValidEntryStyle}"
-                           Flags="ValidateOnValueChanged"
-                           MaximumLength="100"
-                           MinimumLength="5" />
-                        </Entry.Behaviors>
-                    </Entry>
-                </HorizontalStackLayout>
-                <Grid ColumnDefinitions="*,*" Margin="290,0,0,0">
-                    <Button Text="Cancel" Command="{Binding DeleteContactCommand}" Grid.Column="0" />
-                    <Button Text="Save" Command="{Binding SaveContactCommand}" IsEnabled="{Binding IsValid}" Grid.Column="1" />
-                </Grid>
-            </StackLayout>
-        </Border>
-    </VerticalStackLayout>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <!-- Delete Button at the top right -->
+            <Button Text="Delete Employee"
+                    Command="{Binding DeleteEmployeeCommand}"
+                    HorizontalOptions="End"
+                    Style="{StaticResource DangerButton}"/>
+
+            <Label Text="Employee Details" Style="{StaticResource SectionHeader}"/>
+
+            <!-- Name -->
+            <Label Text="Name" Style="{StaticResource FormLabel}"/>
+            <Entry Text="{Binding Name}" Placeholder="Enter name" Style="{StaticResource ValidEntry}">
+                <Entry.Behaviors>
+                    <behaviors:TextValidationBehavior
+                        InvalidStyle="{StaticResource InvalidEntry}"
+                        ValidStyle="{StaticResource ValidEntry}"
+                        MinimumLength="3"
+                        MaximumLength="100"/>
+                </Entry.Behaviors>
+            </Entry>
+
+            <!-- Phone -->
+            <Label Text="Phone" Style="{StaticResource FormLabel}"/>
+            <Entry Text="{Binding Phone}" Placeholder="Enter phone" Keyboard="Telephone" Style="{StaticResource ValidEntry}">
+                <Entry.Behaviors>
+                    <behaviors:TextValidationBehavior
+                        InvalidStyle="{StaticResource InvalidEntry}"
+                        ValidStyle="{StaticResource ValidEntry}"
+                        RegexPattern="^\d{10,15}$"/>
+                </Entry.Behaviors>
+            </Entry>
+
+            <!-- Address -->
+            <Label Text="Address" Style="{StaticResource FormLabel}"/>
+            <Entry Text="{Binding Address}" Placeholder="Enter address" Style="{StaticResource ValidEntry}">
+                <Entry.Behaviors>
+                    <behaviors:TextValidationBehavior
+                        InvalidStyle="{StaticResource InvalidEntry}"
+                        ValidStyle="{StaticResource ValidEntry}"
+                        MinimumLength="5"
+                        MaximumLength="200"/>
+                </Entry.Behaviors>
+            </Entry>
+
+            <!-- Action Buttons -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,20">
+                <Button Text="Cancel" 
+                        Command="{Binding CancelCommand}"
+                        Style="{StaticResource SecondaryButton}"/>
+                <Button Text="Save" 
+                        Command="{Binding SaveEmployeeCommand}"
+                        Style="{StaticResource PrimaryButton}"
+                        Grid.Column="1"
+                        IsEnabled="{Binding IsValid}"/>
+            </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

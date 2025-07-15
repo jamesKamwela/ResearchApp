@@ -1,12 +1,364 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="ResearchApp.Views.Isvar"
-             Title="Isvar">
-    <VerticalStackLayout>
-        <Label 
-            Text="Welcome to .NET MAUI!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
-    </VerticalStackLayout>
-</ContentPage>
+             xmlns:viewModels="clr-namespace:ResearchApp.ViewModels"
+             xmlns:converters="clr-namespace:ResearchApp.Utils"
+             xmlns:behaviors="clr-namespace:CommunityToolkit.Maui.Behaviors;assembly=CommunityToolkit.Maui"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:material="clr-namespace:CommunityToolkit.Maui.Converters;assembly=CommunityToolkit.Maui">
+
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
+            <converters:StringToDoubleConverter x:Key="StringToDoubleConverter"/>
+
+            <!-- Color Palette -->
+            <Color x:Key="PrimaryColor">#6C5CE7</Color>
+            <Color x:Key="SecondaryColor">#00CEFF</Color>
+            <Color x:Key="SuccessColor">#00B894</Color>
+            <Color x:Key="WarningColor">#FDCB6E</Color>
+            <Color x:Key="DangerColor">#D63031</Color>
+            <Color x:Key="LightText">#F5F6FA</Color>
+            <Color x:Key="DarkText">#2D3436</Color>
+            <Color x:Key="CardBackgroundLight">#FFFFFF</Color>
+            <Color x:Key="CardBackgroundDark">#2D3436</Color>
+            <Color x:Key="BorderColorLight">#DFE6E9</Color>
+            <Color x:Key="BorderColorDark">#636E72</Color>
+
+            <!-- Styles -->
+            <Style x:Key="CardStyle" TargetType="Frame">
+                <Setter Property="Padding" Value="20" />
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource CardBackgroundLight}, Dark={StaticResource CardBackgroundDark}}"/>
+                <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource BorderColorLight}, Dark={StaticResource BorderColorDark}}"/>
+                <Setter Property="CornerRadius" Value="12"/>
+                <Setter Property="HorizontalOptions" Value="FillAndExpand"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+                <Setter Property="HasShadow" Value="True"/>
+            </Style>
+
+            <Style x:Key="SectionHeader" TargetType="Label">
+                <Setter Property="FontSize" Value="16"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="Margin" Value="0,0,0,10"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PrimaryColor}, Dark={StaticResource SecondaryColor}}"/>
+            </Style>
+
+            <Style x:Key="PrimaryButton" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource PrimaryColor}"/>
+                <Setter Property="TextColor" Value="{StaticResource LightText}"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="14"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+            </Style>
+
+            <Style x:Key="SecondaryButton" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource WarningColor}"/>
+                <Setter Property="TextColor" Value="{StaticResource DarkText}"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="14"/>
+            </Style>
+
+            <Style x:Key="DangerButton" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource DangerColor}"/>
+                <Setter Property="TextColor" Value="{StaticResource LightText}"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="14"/>
+            </Style>
+
+            <Style x:Key="SuccessButton" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource SuccessColor}"/>
+                <Setter Property="TextColor" Value="{StaticResource LightText}"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="14"/>
+            </Style>
+
+            <Style x:Key="InputLabel" TargetType="Label">
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Margin" Value="0,0,0,5"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource DarkText}, Dark={StaticResource LightText}}"/>
+            </Style>
+
+            <Style x:Key="SearchBarStyle" TargetType="SearchBar">
+                <Setter Property="BackgroundColor" Value="Transparent"/>
+                <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light=#666, Dark=#AAA}"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource DarkText}, Dark={StaticResource LightText}}"/>
+                <Setter Property="CancelButtonColor" Value="{StaticResource PrimaryColor}"/>
+            </Style>
+        </ResourceDictionary>
+    </ContentView.Resources>
+
+    <ScrollView Padding="20" BackgroundColor="{AppThemeBinding Light=#F5F6FA, Dark=#1E272E}">
+        <VerticalStackLayout Spacing="0">
+            <!-- Header with Date -->
+            <Frame Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="📝 New Work Entry" Style="{StaticResource SectionHeader}"/>
+
+                    <!-- Work Date -->
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="10" 
+                          VerticalOptions="Center">
+                        <Label Text="📅 Tarıh:" Style="{StaticResource InputLabel}" 
+                               VerticalOptions="Center"/>
+                        <DatePicker Date="{Binding WorkDate}" 
+                                    MinimumDate="01/01/2000"
+                                    MaximumDate="{x:Static system:DateTime.Today}"
+                                    Grid.Column="1" HorizontalOptions="End"/>
+                      
+                    </Grid>
+
+                    <!-- Entry Date Toggle -->
+                    <Grid ColumnDefinitions="Auto,*" 
+                          ColumnSpacing="10" 
+                          VerticalOptions="Center">
+                        <Label Text="🔄 Different Entry Date?" Style="{StaticResource InputLabel}" VerticalOptions="Center"/>
+                        <Switch IsToggled="{Binding IsEntryDateDifferent}" 
+                                ThumbColor="{StaticResource PrimaryColor}"
+                                OnColor="{StaticResource PrimaryColor}"
+                                Grid.Column="1" HorizontalOptions="Start"/>
+                    </Grid>
+
+                    <!-- Entry Date (only shown when different) -->
+                    <Border IsVisible="{Binding IsEntryDateDifferent}" 
+                            BackgroundColor="{AppThemeBinding Light=#FFF3CD, Dark=#332701}"
+                            Stroke="{AppThemeBinding Light=#FFC107, Dark=#FFEB3B}"
+                            StrokeThickness="1"
+                            Padding="15"
+                            StrokeShape="RoundRectangle 8">
+                        <Grid ColumnDefinitions="Auto,*"
+                              ColumnSpacing="10" 
+                              VerticalOptions="Center">
+                            <Label Text="📝 Record Entry Date:" Style="{StaticResource InputLabel}" VerticalOptions="Center"/>
+                            <DatePicker Date="{Binding EntryDate}" 
+                                        MinimumDate="01/01/2000"
+                                        MaximumDate="{Binding Source={x:Static system:DateTime.Today}}"
+                                        Grid.Column="1" HorizontalOptions="End"/>
+                        </Grid>
+                    </Border>
+
+
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Client Selection -->
+            <Frame Style="{StaticResource CardStyle}" IsVisible="{Binding IsClientSelectionFrameVisible}">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="👥 Select Client" Style="{StaticResource SectionHeader}"/>
+
+                    <SearchBar Placeholder="Search clients..."
+                              Style="{StaticResource SearchBarStyle}"
+                              Text="{Binding ClientSearchText}"
+                              IsVisible="{Binding IsClientSearchEnabled}"/>
+
+                    <Border IsVisible="{Binding SelectedClient, Converter={StaticResource NullToBoolConverter}}"
+                            Padding="15"
+                            BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2C3E50}"
+                            Stroke="{AppThemeBinding Light=#DFE6E9, Dark=#636E72}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 8">
+                        <Grid ColumnDefinitions="*,Auto" 
+                              VerticalOptions="Center">
+                            <Label Text="{Binding SelectedClient.Name}" FontSize="14" 
+                                   VerticalOptions="Center"/>
+                            <Button Text="✕" Command="{Binding ClearClientSelectionCommand}"
+                                    Style="{StaticResource DangerButton}"
+                                    Grid.Column="1" FontSize="16"
+                                    Padding="0"
+                                    WidthRequest="40"
+                                    HeightRequest="40"/>
+                        </Grid>
+                    </Border>
+
+                    <CollectionView ItemsSource="{Binding FilteredClients}" SelectionMode="Single"
+                                   IsVisible="{Binding IsClientSearchEnabled}" HeightRequest="150">
+                        <CollectionView.EmptyView>
+                            <Label Text="🔍 No clients found" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center"
+                                   FontSize="14"
+                                   IsVisible="{Binding HasClientResults, Converter={StaticResource InverseBoolConverter}}"/>
+                        </CollectionView.EmptyView>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="15,10" ColumnDefinitions="Auto,*">
+                                    <Label Text="👤" FontSize="14" VerticalOptions="Center"/>
+                                    <Label Text="{Binding Name}" FontSize="14" Grid.Column="1" VerticalOptions="Center"/>
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:WorkEntryViewModel}}, Path=SelectClientCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Grid.GestureRecognizers>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Selected Client Display -->
+            <Frame Style="{StaticResource CardStyle}" IsVisible="{Binding IsSelectedClientFrameVisible}">
+                <Grid ColumnDefinitions="Auto,*,Auto" 
+                      VerticalOptions="Center">
+                    <Label Text="✅ Selected Client:" FontSize="14" VerticalOptions="Center"/>
+                    <Label Text="{Binding SelectedClient.Name}" FontSize="14" Grid.Column="1" VerticalOptions="Center"/>
+                    <Button Text="Remove" Command="{Binding ClearClientSelectionCommand}"
+                            Style="{StaticResource DangerButton}"
+                            Grid.Column="2"/>
+                </Grid>
+            </Frame>
+
+            <!-- Job Selection -->
+            <Frame Style="{StaticResource CardStyle}" IsVisible="{Binding IsJobSelectionVisible}">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="💼 Select Job" Style="{StaticResource SectionHeader}"/>
+                    <Picker Title="🔍 Select a job..." 
+                            ItemsSource="{Binding ClientJobs}"
+                            ItemDisplayBinding="{Binding JobName}" 
+                            SelectedItem="{Binding SelectedJob}"
+                            IsVisible="{Binding HasJobs}"
+                            TextColor="{AppThemeBinding Light={StaticResource DarkText}, Dark={StaticResource LightText}}">
+                        <Picker.Behaviors>
+                            <behaviors:EventToCommandBehavior
+                                EventName="SelectedIndexChanged"
+                                Command="{Binding SelectJobCommand}"/>
+                        </Picker.Behaviors>
+                    </Picker>
+                    <Label Text="📭 No jobs found" 
+                           IsVisible="{Binding ShowNoJobsMessage}" 
+                           FontSize="14"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Selected Job Display -->
+            <Frame Style="{StaticResource CardStyle}" IsVisible="{Binding IsSelectedJobFrameVisible}">
+                <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+                    <Label Text="✅ Selected Job:" FontSize="14" VerticalOptions="Center"/>
+                    <Label Text="{Binding SelectedJob.JobName}" FontSize="14" Grid.Column="1" VerticalOptions="Center"/>
+                    <Button Text="Remove" Command="{Binding ClearJobSelectionCommand}"
+                            Style="{StaticResource DangerButton}"
+                            Grid.Column="2"/>
+                </Grid>
+            </Frame>
+
+            <!-- Employee Selection -->
+            <Frame Style="{StaticResource CardStyle}" IsVisible="{Binding IsEmployeeSelectionFrameVisible}">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="👥 Number of Employees" Style="{StaticResource SectionHeader}"/>
+
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" VerticalOptions="Center">
+                        <Label Text="🔢 Count:" Style="{StaticResource InputLabel}" VerticalOptions="Center"/>
+                        <Entry Text="{Binding NumberOfEmployees}" 
+                               Placeholder="Enter number" 
+                               Keyboard="Numeric"
+                               Grid.Column="1"/>
+                    </Grid>
+
+                    <Label Text="👤 Select Employee" Style="{StaticResource SectionHeader}"/>
+                    <SearchBar Placeholder="Search employees..." 
+                              Style="{StaticResource SearchBarStyle}"
+                              Text="{Binding EmployeeSearchText}"
+                              IsVisible="{Binding IsEmployeeSearchEnabled}"/>
+
+                    <CollectionView ItemsSource="{Binding FilteredEmployees}" 
+                                   SelectionMode="None"
+                                   IsVisible="{Binding IsEmployeeSearchCollectionViewEnabled}" 
+                                   HeightRequest="150">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="15,10" ColumnDefinitions="Auto,*">
+                                    <Label Text="👤" FontSize="14" VerticalOptions="Center"/>
+                                    <Label Text="{Binding Name}" FontSize="14" Grid.Column="1" VerticalOptions="Center"/>
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:WorkEntryViewModel}},
+                                            Path=SelectEmployeeCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </Grid.GestureRecognizers>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Selected Employees -->
+            <Frame Style="{StaticResource CardStyle}" IsVisible="{Binding IsSelectedEmployeesFrameVisible}">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="✅ {Binding EmployeeSelectionSummary}" Style="{StaticResource SectionHeader}"/>
+                    <CollectionView ItemsSource="{Binding SelectedEmployees}" SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="15,10" ColumnDefinitions="*,Auto">
+                                    <Label Text="{Binding Name}" FontSize="14" VerticalOptions="Center"/>
+                                    <Button Grid.Column="1" 
+                                            Text="✕" 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, 
+                                                     Path=BindingContext.RemoveEmployeeCommand}"
+                                            CommandParameter="{Binding .}"
+                                            Style="{StaticResource DangerButton}"
+                                            Padding="0"
+                                            WidthRequest="40"
+                                            HeightRequest="40"/>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Work Details -->
+            <Frame Style="{StaticResource CardStyle}" IsVisible="{Binding IsWorkDetailsFrameVisible}">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="📋 Work Details" Style="{StaticResource SectionHeader}"/>
+
+                    <Label Text="📏 Quantity" Style="{StaticResource InputLabel}"/>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Entry Text="{Binding QuantityCompleted, Converter={StaticResource StringToDoubleConverter}}" 
+                               Placeholder="{Binding QuantityPlaceholder}" 
+                               Keyboard="Numeric"/>
+                        <Label Text="{Binding SelectedJob.Unit}" Grid.Column="1" FontSize="14" VerticalOptions="Center"/>
+                    </Grid>
+
+                    <Label Text="💸 Commission (%)" Style="{StaticResource InputLabel}"/>
+                    <Entry Text="{Binding CommissionRate, Converter={StaticResource StringToDoubleConverter}}" 
+                           Placeholder="0.00" 
+                           Keyboard="Numeric"/>
+
+                    <Button Text="💾 Save Details" 
+                            Command="{Binding SaveWorkDetailsCommand}"
+                            Style="{StaticResource SuccessButton}"
+                            HorizontalOptions="End"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Work Summary -->
+            <Frame Style="{StaticResource CardStyle}" IsVisible="{Binding IsWorkSummaryFrameVisible}">
+                <VerticalStackLayout Spacing="15">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="📝 Work Summary" Style="{StaticResource SectionHeader}"/>
+                        <Button Text="✏️ Edit" 
+                                Command="{Binding EditWorkDetailsCommand}"
+                                Style="{StaticResource SecondaryButton}"
+                                Grid.Column="1"/>
+                    </Grid>
+                    <Label Text="{Binding WorkSummaryText}" FontSize="14" LineBreakMode="WordWrap"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Action Buttons -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="15" Margin="0,15">
+                <Button Text="❌ Cancel" 
+                        Command="{Binding CancelCommand}" 
+                        Style="{StaticResource DangerButton}"/>
+                <Button Text="💾 Save" 
+                        Grid.Column="1"
+                        Command="{Binding SaveWorkEntryCommand}"
+                        Style="{StaticResource SuccessButton}"
+                        IsEnabled="{Binding IsFormValid}"/>
+            </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

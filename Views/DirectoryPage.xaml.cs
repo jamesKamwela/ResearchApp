@@ -8,7 +8,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ResearchApp.Models;
 using System.Collections.ObjectModel;
-using Syncfusion.Maui.Core.Carousel;
 using ResearchApp.ViewModels;
 namespace ResearchApp.Views;
 
@@ -25,13 +24,15 @@ public partial class DirectoryPage : ContentPage
         base.OnDisappearing();
         (BindingContext as IDisposable)?.Dispose();
 
-    
+
+
+    }
+
+
+
+
+  
+
+
 
 }
-
-}
-   
-
-
-
-

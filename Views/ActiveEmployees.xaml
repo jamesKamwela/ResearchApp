@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:ResearchApp.Models"
+             xmlns:vm="clr-namespace:ResearchApp.ViewModels"
+             xmlns:converters="clr-namespace:ResearchApp.Utils"
+             x:Class="ResearchApp.Views.ActiveEmployees">
+
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <converters:StringToBoolConverter x:Key="StringToBoolConverter" />
+
+            <!-- Add summary card styles -->
+         
+            <Style x:Key="SummaryCardStyle" TargetType="Frame">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFFFFF, Dark=#2B2B2B}"/>
+                <Setter Property="BorderColor" Value="{AppThemeBinding Light=#E0E0E0, Dark=#404040}"/>
+                <Setter Property="CornerRadius" Value="12"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,8,16"/>
+                <Setter Property="HasShadow" Value="True"/>
+            </Style>
+
+            <Style x:Key="SummaryValueStyle" TargetType="Label">
+                <Setter Property="FontSize" Value="20"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="HorizontalTextAlignment" Value="Center"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#3B82F6, Dark=#60A5FA}"/>
+            </Style>
+            <Style x:Key="ClickableCardStyle" TargetType="Frame">
+                <Setter Property="BorderColor" Value="{AppThemeBinding Light=#E0E0E0, Dark=#404040}"/>
+                <Setter Property="BackgroundColor" Value="{StaticResource SurfaceColor}" />
+                <Setter Property="HasShadow" Value="True" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="Padding" Value="16" />
+                <Setter Property="Margin" Value="8" />
+            </Style>
+            <Style x:Key="SummaryTitleStyle" TargetType="Label">
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"/>
+                <Setter Property="HorizontalTextAlignment" Value="Center"/>
+            </Style>
+        </ResourceDictionary>
+    </ContentView.Resources>
+
+    <ScrollView BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#111827}">
+        <VerticalStackLayout Spacing="20" Padding="16">
+
+            <!-- Header -->
+            <Label Text="Employee Statistics" 
+                   Style="{StaticResource HeaderLabelStyle}"/>
+
+            <!-- Period Selection Card -->
+            <Frame BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1F2937}"
+                   BorderColor="{AppThemeBinding Light=#E5E7EB, Dark=#374151}"
+                   CornerRadius="12"
+                   Padding="16"
+                   HasShadow="True">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Select Period" 
+                           FontSize="14" 
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#374151, Dark=#F9FAFB}"/>
+                    <Picker ItemsSource="{Binding PeriodOptions}" 
+                           SelectedItem="{Binding SelectedPeriod, Mode=TwoWay}"
+                           Style="{StaticResource PickerStyle}"
+                           Title="Choose a period"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Summary Cards -->
+            <Grid ColumnDefinitions="*,*" 
+                  RowDefinitions="Auto" 
+                  ColumnSpacing="8"
+                  Margin="0,0,0,16">
+
+                <!-- Total Employees Card -->
+                <Frame Grid.Column="0" 
+                       BackgroundColor="{AppThemeBinding Light=#E3F2FD, Dark=#0D47A1}" 
+                       BorderColor="{AppThemeBinding Light=#BBDEFB, Dark=#1565C0}"
+                       CornerRadius="12"
+                       Padding="16"
+                       HasShadow="True">
+                    <StackLayout Spacing="8">
+                        <Label Text="Total Employees" 
+                   Style="{StaticResource SummaryTitleStyle}"
+                   TextColor="{AppThemeBinding Light=#0D47A1, Dark=#E3F2FD}"/>
+                        <!-- Text color flips for visibility -->
+                        <Label Text="{Binding TotalEmployees, StringFormat='{0:N0}'}" 
+                   Style="{StaticResource SummaryValueStyle}"
+                   TextColor="{AppThemeBinding Light=#0D47A1, Dark=#FFFFFF}"/>
+                        <!-- Darker blue (light) / white (dark) -->
+                    </StackLayout>
+                </Frame>
+
+                <!-- Total Revenue Card -->
+                <Frame Grid.Column="1" 
+                       BackgroundColor="{AppThemeBinding Light=#E8F5E9, Dark=#1B5E20}"  
+                       BorderColor="{AppThemeBinding Light=#C8E6C9, Dark=#2E7D32}"
+                       CornerRadius="12"
+                       Padding="16"
+                       HasShadow="True">
+                    <StackLayout Spacing="8">
+                        <Label Text="Total Revenue" 
+                   Style="{StaticResource SummaryTitleStyle}"
+                   TextColor="{AppThemeBinding Light=#1B5E20, Dark=#E8F5E9}"/>
+                        <!-- Text color flips -->
+                        <Label Text="{Binding TotalRevenue, StringFormat='{0:N2} ₺'}" 
+                   Style="{StaticResource SummaryValueStyle}"
+                   TextColor="{AppThemeBinding Light=#1B5E20, Dark=#FFFFFF}"/>
+                        <!-- Darker green (light) / white (dark) -->
+                    </StackLayout>
+                </Frame>
+            </Grid>
+
+            <!-- Loading Indicator -->
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                              IsVisible="{Binding IsLoading}"
+                              HeightRequest="40"
+                              Color="{AppThemeBinding Light=#3B82F6, Dark=#60A5FA}"/>
+
+            <!-- Status Message -->
+            <Label Text="{Binding StatusMessage}"
+                   HorizontalOptions="Center"
+                   FontSize="14"
+                   TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"
+                   IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"/>
+
+            <!-- Employee Stats Header -->
+            <Grid ColumnDefinitions="Auto,*,Auto" 
+                  Margin="16,0"
+                  IsVisible="{Binding HasData}">
+                <Label Text="Employee" 
+                       FontSize="12" 
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"
+                       Grid.Column="0"/>
+                <Label Text="Jobs" 
+                       FontSize="12" 
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"
+                       HorizontalOptions="Center"
+                       Grid.Column="1"/>
+                <Label Text="Earnings" 
+                       FontSize="12" 
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"
+                       HorizontalOptions="End"
+                       Grid.Column="2"/>
+            </Grid>
+
+            <!-- Employee Stats List -->
+            <Frame Style="{StaticResource ClickableCardStyle}">
+                <CollectionView ItemsSource="{Binding EmployeeStats}"
+                           IsVisible="{Binding HasData}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+
+                                <Frame Style="{StaticResource ClickableCardStyle}">
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ActiveEmployeesViewModel}}, Path=EmployeeClickedCommand}"
+                                                    CommandParameter="{Binding .}"/>
+                            </Frame.GestureRecognizers>
+                            <Grid ColumnDefinitions="2*,2*,Auto"
+                                  ColumnSpacing="12"
+                                  RowSpacing="4">
+                                <!-- Employee Name -->
+                                <Label Text="{Binding EmployeeName}" 
+                                       Style="{StaticResource EmployeeNameStyle}"
+                                       Grid.Column="0"/>
+
+                                <!-- Job Count -->
+                                <Label Text="{Binding CompletedJobsCount, StringFormat='{0} jobs'}" 
+                                       Style="{StaticResource JobCountStyle}"
+                                       Grid.Column="1"/>
+
+                                <!-- Earnings -->
+                                <Label Text="{Binding TotalEarnings, StringFormat='{0:N0} ₺'}" 
+                                       Style="{StaticResource EarningsStyle}"
+                                       Grid.Column="2"/>
+                            </Grid>
+                        </Frame>
+                                
+                    </DataTemplate>
+
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Frame>
+
+
+            <!-- Empty State -->
+            <VerticalStackLayout Spacing="12" 
+                                HorizontalOptions="Center"
+                                IsVisible="{Binding HasData, Converter={StaticResource InvertedBoolConverter}}">
+                <Label Text="📊" 
+                       FontSize="48"
+                       HorizontalOptions="Center"/>
+                <Label Text="No employee data available" 
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"/>
+                <Label Text="Try selecting a different period or ensure employees have completed jobs." 
+                       FontSize="14"
+                       HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light=#9CA3AF, Dark=#6B7280}"
+                       HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

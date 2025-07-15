@@ -16,15 +16,15 @@
             ContentTemplate="{DataTemplate views:Dashboard}"
             Route="Dashboard" />
     </FlyoutItem>
-
-    <!-- İşVar -->
-    <FlyoutItem Title="İşVar">
+    
+    
+    <FlyoutItem Title="iş işlemleri">
         <ShellContent
-            Title="Profile"
-            ContentTemplate="{DataTemplate views:Isvar}"
-            Route="Isvar" />
-    </FlyoutItem>
-
+           Title="iş işlemleri"
+           ContentTemplate="{DataTemplate views:TestTabbedPage}"
+           Route="TestTabbedPage" />
+    </FlyoutItem> 
+   
     <!-- Profile -->
     <FlyoutItem Title="Profile">
         <ShellContent
@@ -32,9 +32,6 @@
             ContentTemplate="{DataTemplate views:Profile}"
             Route="Profile" />
     </FlyoutItem>
-
-  
-
     <!-- Data -->
     <FlyoutItem Title="Data">
         <Tab>

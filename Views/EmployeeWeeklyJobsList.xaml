@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ResearchApp.Views.EmployeeWeeklyJobsList"
+             xmlns:converters="clr-namespace:ResearchApp.Utils"
+             xmlns:models="clr-namespace:ResearchApp.Models"
+             xmlns:vm="clr-namespace:ResearchApp.ViewModels"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             Title="{Binding Employee.Name}">
+    <ScrollView>
+        <VerticalStackLayout>
+            <Grid ColumnDefinitions="*, *,*"
+                  RowDefinitions="Auto,Auto,Auto,*"
+                  ColumnSpacing="1"
+                  RowSpacing="1">
+
+                <!-- Employee Name Header -->
+                <Label 
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Text="{Binding Employee.Name}"
+                    VerticalOptions="Center"
+                    HorizontalOptions="CenterAndExpand"
+                    FontAttributes="Bold"
+                    FontSize="20"/>
+
+                <!-- Week Range Header -->
+                <Label 
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Text="{Binding WeekRange}"
+                    VerticalOptions="Center"
+                    HorizontalOptions="CenterAndExpand"
+                    FontAttributes="Bold"
+                    FontSize="16"/>
+
+                <!-- Completed Jobs Table -->
+                <Frame Grid.Column="1"
+                       Grid.Row="3"
+                       Margin="0,10,0,0"
+                       Padding="10"
+                       BackgroundColor="{DynamicResource CardBackground}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Completed Jobs" 
+                               FontSize="18"
+                               HorizontalOptions="Center"
+                               FontAttributes="Bold"/>
+
+                        <!-- Table Header -->
+                        <Grid ColumnDefinitions="*,*,*,*,1.5*"
+                              ColumnSpacing="5"
+                              Padding="0,0,0,5">
+                            <Label Text="Client" 
+                                   Grid.Column="0"
+                                   FontAttributes="Bold"/>
+                            <Label Text="Job" 
+                                   Grid.Column="1"
+                                   FontAttributes="Bold"/>
+                            <Label Text="Quantity" 
+                                   Grid.Column="2"
+                                   FontAttributes="Bold"/>
+                            <Label Text="Total Amount" 
+                                   Grid.Column="3"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="End"/>
+                            <Label Text="Employee Cut" 
+                                   Grid.Column="4"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="End"/>
+                        </Grid>
+
+                        <!-- Table Rows -->
+                        <CollectionView ItemsSource="{Binding CompletedJobs}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="*,*,*,*,1.5*"
+                                          ColumnSpacing="5"
+                                          Padding="0,5">
+                                        <Label Text="{Binding ClientName}" 
+                                               Grid.Column="0"/>
+                                        <Label Text="{Binding JobName}" 
+                                               Grid.Column="1"/>
+                                        <Label Text="{Binding QuantityCompleted, StringFormat='{0:N2}'}" 
+                                               Grid.Column="2"
+                                               HorizontalTextAlignment="End"/>
+                                        <Label Text="{Binding TotalAmount, StringFormat='{0:C}'}" 
+                                               Grid.Column="3"
+                                               HorizontalTextAlignment="End"/>
+                                        <Label Text="{Binding AmountPerEmployee, StringFormat='{0:C}'}" 
+                                               Grid.Column="4"
+                                               HorizontalTextAlignment="End"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Frame>
+            </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

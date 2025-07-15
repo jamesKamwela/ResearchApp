@@ -2,67 +2,102 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModels="clr-namespace:ResearchApp.ViewModels"
              xmlns:behaviors="clr-namespace:CommunityToolkit.Maui.Behaviors;assembly=CommunityToolkit.Maui"
+             xmlns:converters="clr-namespace:ResearchApp.Utils"
              x:Class="ResearchApp.Views.AddEmployee"
              Title="Add New Employee">
     <ContentPage.Resources>
-        <!-- Define styles for valid and invalid entries -->
-               <Style x:Key="ValidEntryStyle" TargetType="Entry">
-            <Setter Property="TextColor" Value="Black" />
-        </Style>
-        <Style x:Key="InvalidEntryStyle" TargetType="Entry">
-            <Setter Property="TextColor" Value="Red" />
-        </Style>
+        <ResourceDictionary>
+            <converters:IndexConverter x:Key="IndexConverter"/>
+            <Style x:Key="SectionHeader" TargetType="Label">
+                <Setter Property="FontSize" Value="20"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="Margin" Value="0,20,0,10"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#2C3E50, Dark=#ECF0F1}"/>
+            </Style>
+            <Style x:Key="FormLabel" TargetType="Label">
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Margin" Value="0,5,0,0"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#34495E, Dark=#BDC3C7}"/>
+            </Style>
+            <Style x:Key="ValidEntry" TargetType="Entry">
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}"/>
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FAFAFA, Dark=#2D2D2D}"/>
+            </Style>
+            <Style x:Key="InvalidEntry" TargetType="Entry">
+                <Setter Property="TextColor" Value="Red"/>
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFF0F0, Dark=#3D1E1E}"/>
+            </Style>
+            <Style x:Key="BaseButton" TargetType="Button">
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="15,10"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Margin" Value="5"/>
+                <Setter Property="TextColor" Value="White"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+            </Style>
+            <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="#3498db"/>
+            </Style>
+            <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="#2980b9"/>
+            </Style>
+            <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#e74c3c, Dark=#c0392b}"/>
+            </Style>
+            <Style x:Key="NewJobButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#9b59b6, Dark=#8e44ad}"/>
+            </Style>
+        </ResourceDictionary>
     </ContentPage.Resources>
+
     <ScrollView>
-        <Border Stroke="Transparent" BackgroundColor="White" Margin="10" WidthRequest="500"
-                HorizontalOptions="Start" Padding="10,10,10,10">
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <!-- Employee Details -->
+            <Label Text="Employee Data" Style="{StaticResource SectionHeader}"/>
 
-            <VerticalStackLayout Padding="20" Spacing="15">
-                <!-- Employee Name -->
-                <Label Text="Employee Name" />
-                <Entry Placeholder="Enter Name" Text="{Binding EmployeeName, Mode=TwoWay}">
-                    <Entry.Behaviors>
-                        <behaviors:TextValidationBehavior
-                            InvalidStyle="{StaticResource InvalidEntryStyle}"
-                            ValidStyle="{StaticResource ValidEntryStyle}"
-                            Flags="ValidateOnValueChanged"
-                            MaximumLength="200"
-                            MinimumLength="3" />
-                    </Entry.Behaviors>
-                </Entry>
+            <!-- Employee's Name -->
+            <Label Text="Employee Name" Style="{StaticResource FormLabel}"/>
+            <Entry Placeholder="Enter Name" Text="{Binding EmployeeName, Mode=TwoWay}" Style="{StaticResource ValidEntry}">
+                <Entry.Behaviors>
+                    <behaviors:TextValidationBehavior
+                        InvalidStyle="{StaticResource InvalidEntry}"
+                        ValidStyle="{StaticResource ValidEntry}"
+                        Flags="ValidateOnValueChanged"
+                        MaximumLength="200"
+                        MinimumLength="3" />
+                </Entry.Behaviors>
+            </Entry>
 
-                <!-- Employee Phone -->
-                <Label Text="Employee Phone" />
-                <Entry Placeholder="Enter Phone" Text="{Binding EmployeePhone, Mode=TwoWay}" Keyboard="Telephone">
-                    <Entry.Behaviors>
-                        <behaviors:TextValidationBehavior
-                            InvalidStyle="{StaticResource InvalidEntryStyle}"
-                            ValidStyle="{StaticResource ValidEntryStyle}"
-                            Flags="ValidateOnValueChanged"
-                            RegexPattern="^\d{10,15}$" />
-                    </Entry.Behaviors>
-                </Entry>
-                <!-- Employee Address -->
-                <Label Text="Employee Address" />
-                <Entry Placeholder="Enter Address" Text="{Binding EmployeeAddress, Mode=TwoWay}">
-                    <Entry.Behaviors>
-                        <behaviors:TextValidationBehavior
-                            InvalidStyle="{StaticResource InvalidEntryStyle}"
-                            ValidStyle="{StaticResource ValidEntryStyle}"
-                            Flags="ValidateOnValueChanged"
-                            MaximumLength="100"
-                            MinimumLength="5" />
-                    </Entry.Behaviors>
-                </Entry>
+            <!-- Employee Phone -->
+            <Label Text="Employee Phone" Style="{StaticResource FormLabel}"/>
+            <Entry Placeholder="Enter Phone" Text="{Binding EmployeePhone, Mode=TwoWay}" Keyboard="Telephone" Style="{StaticResource ValidEntry}">
+                <Entry.Behaviors>
+                    <behaviors:TextValidationBehavior
+                        InvalidStyle="{StaticResource InvalidEntry}"
+                        ValidStyle="{StaticResource ValidEntry}"
+                        Flags="ValidateOnValueChanged"
+                        RegexPattern="^\d{10,15}$" />
+                </Entry.Behaviors>
+            </Entry>
 
-                <!-- Buttons -->
-              <Grid ColumnDefinitions="*,*" Margin="290,0,0,0">
-                    <Button Text="Cancel" Command="{Binding CancelCommand}" Grid.Column="0" />
-                    <Button Text="Save" Command="{Binding SaveEmployeeCommand}" IsEnabled="{Binding IsValid}" Grid.Column="1" />
-                </Grid>
-            </VerticalStackLayout>
-        </Border>
+            <!-- Employee Address -->
+            <Label Text="Employee Address" Style="{StaticResource FormLabel}"/>
+            <Entry Placeholder="Enter Address" Text="{Binding EmployeeAddress, Mode=TwoWay}" Style="{StaticResource ValidEntry}">
+                <Entry.Behaviors>
+                    <behaviors:TextValidationBehavior
+                        InvalidStyle="{StaticResource InvalidEntry}"
+                        ValidStyle="{StaticResource ValidEntry}"
+                        Flags="ValidateOnValueChanged"
+                        MaximumLength="100"
+                        MinimumLength="5" />
+                </Entry.Behaviors>
+            </Entry>
+
+            <!-- Buttons -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,20">
+                <Button Text="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource SecondaryButton}"/>
+                <Button Text="Save" Command="{Binding SaveEmployeeCommand}" Style="{StaticResource PrimaryButton}" Grid.Column="1" IsEnabled="{Binding IsValid}"/>
+            </Grid>
+        </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>
-    

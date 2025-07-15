@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ResearchApp.ViewModels"
+             xmlns:converters="clr-namespace:ResearchApp.Utils"
+             x:Class="ResearchApp.Views.PendingJobs">
+
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <converters:BoolToTextConverter x:Key="BoolToTextConverter" />
+
+            <!-- Modern Card Style -->
+            <Style x:Key="ModernJobCard" TargetType="Border">
+                <Setter Property="Background" Value="{AppThemeBinding Light=White, Dark=#1E1E1E}"/>
+                <Setter Property="Stroke" Value="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"/>
+                <Setter Property="StrokeThickness" Value="1"/>
+                <Setter Property="Padding" Value="20"/>
+                <Setter Property="StrokeShape">
+                    <RoundRectangle CornerRadius="12"/>
+                </Setter>
+                <Setter Property="Margin" Value="16,8,16,8"/>
+                <Setter Property="Shadow">
+                    <Shadow Brush="{AppThemeBinding Light=#40000000, Dark=#60000000}" 
+                            Offset="0,2" 
+                            Radius="8" 
+                            Opacity="0.1"/>
+                </Setter>
+            </Style>
+
+            <!-- Header Style -->
+            <Style x:Key="HeaderStyle" TargetType="Label">
+                <Setter Property="FontSize" Value="28"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#2C3E50, Dark=#ECF0F1}"/>
+                <Setter Property="Margin" Value="0,0,0,10"/>
+            </Style>
+
+            <!-- Section Title Style -->
+            <Style x:Key="SectionTitle" TargetType="Label">
+                <Setter Property="FontSize" Value="16"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#34495E, Dark=#BDC3C7}"/>
+                <Setter Property="Margin" Value="0,0,0,4"/>
+            </Style>
+
+            <!-- Detail Text Style - Changed from grey to black/dark -->
+            <Style x:Key="DetailText" TargetType="Label">
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}"/>
+                <Setter Property="LineBreakMode" Value="TailTruncation"/>
+            </Style>
+
+            <!-- Status Label Style - Changed from grey to black/dark -->
+            <Style x:Key="StatusLabel" TargetType="Label">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}"/>
+                <Setter Property="VerticalOptions" Value="Center"/>
+                <Setter Property="Margin" Value="0,0,8,0"/>
+            </Style>
+            <!-- Amount Style -->
+            <Style x:Key="AmountStyle" TargetType="Label">
+                <Setter Property="FontSize" Value="16"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#27AE60, Dark=#2ECC71}"/>
+            </Style>
+
+            <!-- Modern Switch Style -->
+            <Style x:Key="ModernSwitch" TargetType="Switch">
+                <Setter Property="OnColor" Value="#3498DB"/>
+                <Setter Property="ThumbColor" Value="White"/>
+                <Setter Property="VerticalOptions" Value="Center"/>
+                <Setter Property="Scale" Value="0.8"/>
+            </Style>
+
+            <!-- Completed Switch Style -->
+            <Style x:Key="CompletedSwitch" TargetType="Switch" BasedOn="{StaticResource ModernSwitch}">
+                <Setter Property="OnColor" Value="#2ECC71"/>
+            </Style>
+
+            <!-- Paid Switch Style -->
+            <Style x:Key="PaidSwitch" TargetType="Switch" BasedOn="{StaticResource ModernSwitch}">
+                <Setter Property="OnColor" Value="#E74C3C"/>
+            </Style>
+
+           
+
+            <!-- Delete Button Style -->
+            <Style x:Key="DeleteButton" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="TextColor" Value="#E74C3C"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="Padding" Value="12,8"/>
+                <Setter Property="CornerRadius" Value="6"/>
+                <Setter Property="BorderWidth" Value="1"/>
+                <Setter Property="BorderColor" Value="#E74C3C"/>
+                <Setter Property="MinimumWidthRequest" Value="80"/>
+            </Style>
+
+            <!-- Modern Picker Style -->
+            <Style x:Key="ModernPicker" TargetType="Picker">
+                <Setter Property="Background" Value="{AppThemeBinding Light=White, Dark=#2C3E50}"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#2C3E50, Dark=#ECF0F1}"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Margin" Value="0,0,0,10"/>
+            </Style>
+
+            <!-- Empty State Style -->
+            <Style x:Key="EmptyStateStyle" TargetType="StackLayout">
+                <Setter Property="Padding" Value="40"/>
+                <Setter Property="Spacing" Value="16"/>
+                <Setter Property="HorizontalOptions" Value="Center"/>
+                <Setter Property="VerticalOptions" Value="Center"/>
+            </Style>
+
+        </ResourceDictionary>
+    </ContentView.Resources>
+
+    <ScrollView BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#121212}">
+        <Grid RowDefinitions="Auto,Auto,*" 
+              Padding="0,20,0,20">
+
+            <!-- Header Section -->
+            <StackLayout Grid.Row="0" 
+                        Padding="20,0,20,0"
+                        Spacing="10">
+                <Label Text="Pending Jobs" 
+                       Style="{StaticResource HeaderStyle}"/>
+
+                <!-- Period Selection -->
+                <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+                       BorderColor="{AppThemeBinding Light=#E0E0E0, Dark=#333333}"
+                       CornerRadius="8"
+                       Padding="16,12"
+                       HasShadow="True">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Label Grid.Column="0" 
+                               Text="Period:" 
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=#2C3E50, Dark=#ECF0F1}"
+                               VerticalOptions="Center"/>
+                        <Picker Grid.Column="1"
+                                ItemsSource="{Binding PeriodOptions}" 
+                                SelectedItem="{Binding SelectedPeriod, Mode=TwoWay}"
+                                Style="{StaticResource ModernPicker}"
+                                HorizontalOptions="End"
+                                MinimumWidthRequest="200"/>
+                    </Grid>
+                </Frame>
+            </StackLayout>
+
+            <!-- Stats Summary -->
+            <Grid Grid.Row="1"
+                  Padding="20,10,20,10"
+                  ColumnDefinitions="*,*"
+                  ColumnSpacing="10">
+
+                <Frame Grid.Column="0"
+                       BackgroundColor="{AppThemeBinding Light=#3498DB, Dark=#2980B9}"
+                       CornerRadius="8"
+                       Padding="16"
+                       HasShadow="True">
+                    <StackLayout Spacing="4">
+                        <Label Text="Total Jobs" 
+                               TextColor="White"
+                               FontSize="12"
+                               FontAttributes="Bold"/>
+                        <Label Text="{Binding PendingJobsList.Count}" 
+                               TextColor="White"
+                               FontSize="24"
+                               FontAttributes="Bold"/>
+                    </StackLayout>
+                </Frame>
+
+                <Frame Grid.Column="1"
+                       BackgroundColor="{AppThemeBinding Light=#2ECC71, Dark=#27AE60}"
+                       CornerRadius="8"
+                       Padding="16"
+                       HasShadow="True">
+                    <StackLayout Spacing="4">
+                        <Label Text="Revenue" 
+                               TextColor="White"
+                               FontSize="12"
+                               FontAttributes="Bold"/>
+                        <Label Text="{Binding TotalRevenue, StringFormat='{0:N0} ₺'}" 
+                               TextColor="White"
+                               FontSize="24"
+                               FontAttributes="Bold"/>
+                    </StackLayout>
+                </Frame>
+            </Grid>
+
+            <!-- Jobs List -->
+            <CollectionView Grid.Row="2"
+                           ItemsSource="{Binding PendingJobsList}" 
+                           SelectionMode="None"
+                           Margin="0,10,0,0">
+
+                <CollectionView.EmptyView>
+                    <StackLayout Style="{StaticResource EmptyStateStyle}">
+                        <Label Text="📋" 
+                               FontSize="48"
+                               HorizontalOptions="Center"/>
+                        <Label Text="No Pending Jobs" 
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=#7F8C8D, Dark=#95A5A6}"
+                               HorizontalOptions="Center"/>
+                        <Label Text="All jobs are completed or no jobs found for this period." 
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light=#BDC3C7, Dark=#7F8C8D}"
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center"/>
+                    </StackLayout>
+                </CollectionView.EmptyView>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource ModernJobCard}">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto" 
+                                  RowSpacing="12">
+
+                                <!-- Header Row - Client and Job -->
+                                <Grid Grid.Row="0"
+                                      ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="10">
+                                    <StackLayout Grid.Column="0" 
+                                                Spacing="4">
+                                        <Label Text="{Binding ClientName}" 
+                                               Style="{StaticResource SectionTitle}"/>
+                                        <Label Text="{Binding JobName}" 
+                                               Style="{StaticResource DetailText}"/>
+                                    </StackLayout>
+
+                                    <!-- Delete Button -->
+                                    <Button Grid.Column="1"
+                                            Text="Delete"
+                                            Style="{StaticResource DeleteButton}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:PendingJobsViewModel}}, Path=DeleteJobCommand}"
+                                            CommandParameter="{Binding .}"
+                                            VerticalOptions="Start"/>
+                                </Grid>
+
+                                <!-- Details Row -->
+                                <Grid Grid.Row="1"
+                                      ColumnDefinitions="*,*,*"
+                                      ColumnSpacing="10">
+                                    <StackLayout Grid.Column="0" 
+                                                Spacing="2">
+                                        <Label Text="Date" 
+                                               Style="{StaticResource StatusLabel}"/>
+                                        <Label Text="{Binding WorkDate, StringFormat='{0:MM/dd/yyyy}'}" 
+                                               Style="{StaticResource DetailText}"/>
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Column="1" 
+                                                Spacing="2">
+                                        <Label Text="Employees" 
+                                               Style="{StaticResource StatusLabel}"/>
+                                        <Label Text="{Binding EmployeeCount}" 
+                                               Style="{StaticResource DetailText}"/>
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Column="2" 
+                                                Spacing="2">
+                                        <Label Text="Quantity" 
+                                               Style="{StaticResource StatusLabel}"/>
+                                        <Label Text="{Binding FormattedQuantity}" 
+                                               Style="{StaticResource DetailText}"/>
+                                    </StackLayout>
+                                </Grid>
+
+                                <!-- Amount Row -->
+                                <Grid Grid.Row="2">
+                                    <StackLayout Spacing="2">
+                                        <Label Text="Total Amount" 
+                                               Style="{StaticResource StatusLabel}"/>
+                                        <Label Text="{Binding TotalAmount, StringFormat='{0:N0} TL'}" 
+                                               Style="{StaticResource AmountStyle}"/>
+                                    </StackLayout>
+                                </Grid>
+
+                                <!-- Status Controls Row -->
+                                <Grid Grid.Row="3"
+                                      ColumnDefinitions="*,*"
+                                      ColumnSpacing="20">
+
+                                    <!-- Completed Status -->
+                                    <Frame Grid.Column="0"
+                                           BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#2C3E50}"
+                                           BorderColor="{AppThemeBinding Light=#E0E0E0, Dark=#34495E}"
+                                           CornerRadius="8"
+                                           Padding="12,8"
+                                           HasShadow="False">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <Label Grid.Column="0" 
+                                                   Text="✅" 
+                                                   FontSize="16"
+                                                   VerticalOptions="Center"/>
+                                            <Label Grid.Column="1" 
+                                                   Text="Completed" 
+                                                   Style="{StaticResource StatusLabel}"
+                                                   Margin="8,0,0,0"/>
+                                            <Switch Grid.Column="2"
+                                                    IsToggled="{Binding IsJobCompleted}"
+                                                    Style="{StaticResource CompletedSwitch}"
+                                                    Toggled="OnCompleteToggled"/>
+                                        </Grid>
+                                    </Frame>
+
+                                    <!-- Paid Status -->
+                                    <Frame Grid.Column="1"
+                                           BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#2C3E50}"
+                                           BorderColor="{AppThemeBinding Light=#E0E0E0, Dark=#34495E}"
+                                           CornerRadius="8"
+                                           Padding="12,8"
+                                           HasShadow="False">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <Label Grid.Column="0" 
+                                                   Text="💰" 
+                                                   FontSize="16"
+                                                   VerticalOptions="Center"/>
+                                            <Label Grid.Column="1" 
+                                                   Text="Paid" 
+                                                   Style="{StaticResource StatusLabel}"
+                                                   Margin="8,0,0,0"/>
+                                            <Switch Grid.Column="2"
+                                                    IsToggled="{Binding IsPaid}"
+                                                    Style="{StaticResource PaidSwitch}"
+                                                    Toggled="OnPaidToggled"/>
+                                        </Grid>
+                                    </Frame>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
+    </ScrollView>
+</ContentView>

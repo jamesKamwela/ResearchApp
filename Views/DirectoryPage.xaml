@@ -2,16 +2,24 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModel="clr-namespace:ResearchApp.ViewModels"
              xmlns:converters="clr-namespace:ResearchApp.Utils"
-             xmlns:behaviors="clr-namespace:ResearchApp.Behaviors"
+             xmlns:behaviors="clr-namespace:CommunityToolkit.Mvvm.Input;assembly=CommunityToolkit.Mvvm"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="ResearchApp.Views.DirectoryPage"
              Title="Contacts">
 
-    <ContentPage.Resources>
 
+    
+
+    <ContentPage.Resources>
         <ResourceDictionary>
             <converters:IndexConverter x:Key="IndexConverter"/>
+            <converters:BoolToTextConverter x:Key="BoolToTextConverter" />
         </ResourceDictionary>
+
+     
+        <Color x:Key="SelectedBackgroundColorLight">#D3D3D3</Color>
+        <Color x:Key="SelectedBackgroundColorDark">#555555</Color>
+        
         <Style TargetType="Border" x:Key="ContactItemStyle">
             <Setter Property="StrokeShape" Value="RoundRectangle 10"/>
             <Setter Property="Stroke" Value="Transparent"/>
@@ -20,6 +28,7 @@
             <Setter Property="Padding" Value="15,10"/>
         </Style>
 
+
         <Style TargetType="Label" x:Key="ContactTextStyle">
             <Setter Property="TextColor" Value="{AppThemeBinding Light=#333333, Dark=#EEEEEE}"/>
             <Setter Property="FontSize" Value="14"/>
@@ -27,6 +36,7 @@
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,Auto,*">
+     
         <!-- Search Bar -->
         <SearchBar Grid.Row="0"
                    Placeholder="Search contacts..."
@@ -35,28 +45,46 @@
 
         <!-- Filter Picker -->
         <Picker Grid.Row="1"
-        Title="Filter contacts"
-        ItemsSource="{Binding FilterOptions}"
+                Title="Filter contacts"
+                ItemsSource="{Binding FilterOptions}"
                 Margin="10,5"
                 WidthRequest="150"
                 HorizontalOptions="End"
-        ItemDisplayBinding="{Binding DisplayText}"
-        SelectedItem="{Binding SelectedFilterOption, Mode=TwoWay}"
+                ItemDisplayBinding="{Binding DisplayText}"
+                SelectedItem="{Binding SelectedFilterOption, Mode=TwoWay}"
                 SelectedIndex="{Binding SelectedFilterIndex, Mode=TwoWay}">
-  
         </Picker>
 
         <!-- Contacts List -->
         <CollectionView x:Name="ContactsCollection"
-                       Grid.Row="2"
-                       ItemsSource="{Binding FilteredContacts}"
-                       SelectionMode="None"
-                              RemainingItemsThreshold="5"
-                RemainingItemsThresholdReachedCommand="{Binding LoadMoreContactsCommand}">
+                        Grid.Row="2"
+                        ItemsSource="{Binding FilteredContacts}"
+                        SelectionMode="Single"
+                        SelectedItem="{Binding SelectedContact, Mode=TwoWay}" 
+                        RemainingItemsThreshold="5"
+                        RemainingItemsThresholdReachedCommand="{Binding LoadMoreContactsCommand}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border Style="{StaticResource ContactItemStyle}">
-                        <Grid ColumnDefinitions="40,*" RowDefinitions="Auto,Auto,Auto">
+                    <Border Style="{StaticResource ContactItemStyle}"
+                          >
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ContactTappedCommand}"
+                    CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal"/>
+                                <VisualState x:Name="Selected">
+                                    <VisualState.Setters>
+                                        <Setter TargetName="contactGrid" Property="BackgroundColor" Value="{AppThemeBinding Light=LightGray, Dark=#333333}"/>
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid x:Name="contactGrid" ColumnDefinitions="40,*" RowDefinitions="Auto,Auto,Auto">
+                            
                             <!-- Numbering -->
                             <Label Grid.Column="0" Grid.RowSpan="3"
                                    Text="{Binding ., Converter={StaticResource IndexConverter}, 
@@ -67,50 +95,47 @@
 
                             <!-- Contact Info -->
                             <StackLayout Grid.Column="1" Grid.Row="0" Orientation="Horizontal">
-
                                 <Label Text="Name:" 
-                               Style="{StaticResource ContactTextStyle}"
-                               FontAttributes="Bold"/>
-                                <Label 
-                                   Text="{Binding Name}" 
-                                    Margin="3,0,0,0"
-                                   Style="{StaticResource ContactTextStyle}"/>
+                                       Style="{StaticResource ContactTextStyle}"
+                                       FontAttributes="Bold"/>
+                                <Label Text="{Binding Name}" 
+                                       Margin="3,0,0,0"
+                                       Style="{StaticResource ContactTextStyle}"/>
                                 <Label Text="{Binding IsEmployee, Converter={StaticResource BoolToTextConverter}, 
-                                      ConverterParameter='(Employee)|(Client)'}"
-                               FontSize="12"
-                                    Margin="2,1,0,0"
-                                       
-                                   FontAttributes="Bold"
-                               TextColor="{AppThemeBinding Light=Black, Dark=LightGray}"/>
+                                               ConverterParameter='(Employee)|(Client)'}"
+                                       FontSize="12"
+                                       Margin="2,3,2,0"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=Black, Dark=LightGray}"/>
                             </StackLayout>
 
                             <StackLayout Grid.Column="1" Grid.Row="1" Orientation="Horizontal">
-
                                 <Label Text="Phone:"
-                                   FontAttributes="Bold"
+                                       FontAttributes="Bold"
                                        Style="{StaticResource ContactTextStyle}"/>
                                 <Label Text="{Binding Phone}"
-                                    Margin="3,0,0,0"
-                                       
-                                        Style="{StaticResource ContactTextStyle}"/>
+                                       Margin="3,0,0,0"
+                                       Style="{StaticResource ContactTextStyle}"/>
                             </StackLayout>
 
-                                <StackLayout Grid.Column="1" Grid.Row="2"
+                            <StackLayout Grid.Column="1" Grid.Row="2"
                                          Orientation="Horizontal"
                                          Spacing="5">
                                 <Label Text="Address:"
-                                    Margin="3,0,0,0"
-                                       
-                                   FontAttributes="Bold"
-                                        Style="{StaticResource ContactTextStyle}"/>
+                                       Margin="3,0,0,0"
+                                       FontAttributes="Bold"
+                                       Style="{StaticResource ContactTextStyle}"/>
                                 <Label Text="{Binding DisplayAddress}"
                                        Style="{StaticResource ContactTextStyle}"
                                        LineBreakMode="TailTruncation"/>
-                                </StackLayout>
+                            </StackLayout>
                         </Grid>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+    
     </Grid>
 </ContentPage>
+
+

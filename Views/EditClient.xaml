@@ -2,11 +2,238 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="ResearchApp.Views.EditClient"
-             Title="EditClient">
-    <VerticalStackLayout>
-        <Label 
-            Text="Welcome to .NET MAUI!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
-    </VerticalStackLayout>
+             xmlns:behaviors="clr-namespace:CommunityToolkit.Maui.Behaviors;assembly=CommunityToolkit.Maui"
+             xmlns:viewModel="clr-namespace:ResearchApp.ViewModels"
+             xmlns:converters="clr-namespace:ResearchApp.Utils"
+             Title="Edit Client">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:IndexConverter x:Key="IndexConverter"/>
+
+            <!-- Styles -->
+            <Style x:Key="SectionHeader" TargetType="Label">
+                <Setter Property="FontSize" Value="20"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="Margin" Value="0,20,0,10"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#2C3E50, Dark=#ECF0F1}"/>
+            </Style>
+
+            <Style x:Key="FormLabel" TargetType="Label">
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Margin" Value="0,5,0,0"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#34495E, Dark=#BDC3C7}"/>
+            </Style>
+
+            <Style x:Key="ValidEntry" TargetType="Entry">
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}"/>
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FAFAFA, Dark=#2D2D2D}"/>
+            </Style>
+
+            <Style x:Key="InvalidEntry" TargetType="Entry">
+                <Setter Property="TextColor" Value="Red"/>
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFF0F0, Dark=#3D1E1E}"/>
+            </Style>
+
+            <Style x:Key="JobCard" TargetType="Border">
+                <Setter Property="StrokeShape" Value="RoundRectangle 10"/>
+                <Setter Property="Padding" Value="15"/>
+                <Setter Property="Margin" Value="10,5"/>
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark=#252525}"/>
+                <Setter Property="Stroke" Value="{AppThemeBinding Light=#E0E0E0, Dark=#444444}"/>
+            </Style>
+
+            <!-- Base Button Style -->
+            <Style x:Key="BaseButton" TargetType="Button">
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="15,10"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Margin" Value="5"/>
+                <Setter Property="TextColor" Value="White"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+            </Style>
+
+            <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="#3498db"/>
+            </Style>
+
+            <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="#2980b9"/>
+            </Style>
+
+            <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#e74c3c, Dark=#c0392b}"/>
+            </Style>
+
+            <!-- New Vibrant Button Styles -->
+            <Style x:Key="ShowJobsButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#2ecc71, Dark=#27ae60}"/>
+                <!-- Green -->
+                <Setter Property="Margin" Value="0,10,0,5"/>
+            </Style>
+
+            <Style x:Key="HideJobsButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#e67e22, Dark=#d35400}"/>
+                <!-- Orange -->
+            </Style>
+
+            <Style x:Key="NewJobButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#9b59b6, Dark=#8e44ad}"/>
+                <!-- Purple -->
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <!-- Delete Button -->
+            <Button Text="Delete Client"
+                    Command="{Binding DeleteClientCommand}"
+                    HorizontalOptions="End"
+                    Style="{StaticResource DangerButton}"
+                    IsVisible="{Binding IsClientSectionVisible}"/>
+
+            <!-- Client Form Section -->
+            <VerticalStackLayout IsVisible="{Binding IsClientSectionVisible}">
+                <Label Text="Client Details" Style="{StaticResource SectionHeader}"/>
+
+                <Label Text="Client Name" Style="{StaticResource FormLabel}"/>
+                <Entry Text="{Binding ClientName}" Placeholder="Enter name">
+                    <Entry.Behaviors>
+                        <behaviors:TextValidationBehavior
+                            InvalidStyle="{StaticResource InvalidEntry}"
+                            ValidStyle="{StaticResource ValidEntry}"
+                            MinimumLength="3"
+                            MaximumLength="100"/>
+                    </Entry.Behaviors>
+                </Entry>
+
+                <Label Text="Phone" Style="{StaticResource FormLabel}"/>
+                <Entry Text="{Binding ClientPhone}" Placeholder="Enter phone" Keyboard="Telephone">
+                    <Entry.Behaviors>
+                        <behaviors:TextValidationBehavior
+                            InvalidStyle="{StaticResource InvalidEntry}"
+                            ValidStyle="{StaticResource ValidEntry}"
+                            RegexPattern="^[\d\s\+\-]{7,15}$"/>
+                    </Entry.Behaviors>
+                </Entry>
+
+                <Label Text="Address" Style="{StaticResource FormLabel}"/>
+                <Entry Text="{Binding ClientAddress}" Placeholder="Enter address">
+                    <Entry.Behaviors>
+                        <behaviors:TextValidationBehavior
+                            InvalidStyle="{StaticResource InvalidEntry}"
+                            ValidStyle="{StaticResource ValidEntry}"
+                            MinimumLength="5"
+                            MaximumLength="200"/>
+                    </Entry.Behaviors>
+                </Entry>
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,20">
+                    <Button Text="Cancel" 
+                            Command="{Binding CancelCommand}"
+                            Style="{StaticResource SecondaryButton}"/>
+                    <Button Text="Save" 
+                            Command="{Binding SaveClientCommand}"
+                            Style="{StaticResource PrimaryButton}"
+                            Grid.Column="1"
+                            IsEnabled="{Binding IsValid}"/>
+                </Grid>
+            </VerticalStackLayout>
+
+            <!-- Show Jobs Button - Now more vibrant -->
+            <Button Text="Show Jobs" 
+                    Command="{Binding ShowJobsCommand}"
+                    IsVisible="{Binding IsShowJobsButtonVisible}"
+                    Style="{StaticResource ShowJobsButton}"/>
+
+            <!-- Jobs List -->
+            <CollectionView ItemsSource="{Binding Jobs}"
+                            SelectionMode="Single"
+                            SelectedItem="{Binding SelectedJob}"
+                            IsVisible="{Binding IsJobsListVisible}">
+
+                <CollectionView.EmptyView>
+                    <Label Text="No jobs found"
+                           HorizontalOptions="Center"
+                           Margin="0,20"
+                           TextColor="{AppThemeBinding Light=#7f8c8d, Dark=#bdc3c7}"/>
+                </CollectionView.EmptyView>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource JobCard}">
+                            <Grid ColumnDefinitions="30, *, Auto"
+                                  RowDefinitions="Auto, Auto"
+                                  RowSpacing="5">
+
+                                <!-- Job Number -->
+                                <Label Text="{Binding ., Converter={StaticResource IndexConverter}}"
+                                       VerticalOptions="Center"
+                                       TextColor="{AppThemeBinding Light=#7f8c8d, Dark=#bdc3c7}"
+                                       Grid.RowSpan="2"/>
+                                
+                                
+                                <HorizontalStackLayout Grid.Column="1" Grid.Row="0" Spacing="5">
+                                    <!-- Name Label -->
+                                <Label Text="Name:"
+                                       Style="{StaticResource FormLabel}"
+                                       />
+                                    <Label 
+                                        Text="{Binding Name}" 
+                                        FontAttributes="Bold"
+                                        TextColor="{AppThemeBinding Light=#2c3e50, Dark=#ecf0f1}"
+                                        VerticalOptions="Center"
+                                        Margin="0,5,0,0"/>
+                                </HorizontalStackLayout>
+
+                                <!-- Amount Label -->
+
+                                <HorizontalStackLayout Grid.Column="1" Grid.Row="1" Spacing="5">
+                                    <Label 
+                                    Text="Amount:"
+                                    Style="{StaticResource FormLabel}"
+                                    VerticalOptions="Center"
+                                        Margin="0,1,0,0"/>
+                                    <Label Text="{Binding FormattedAmount}"
+                                           TextColor="{AppThemeBinding Light=#27ae60, Dark=#2ecc71}"
+                                           VerticalOptions="Center"/>
+                                    <Label Text="per" 
+                                           Style="{StaticResource FormLabel}"
+                                           VerticalOptions="Center"
+                                           Margin="0,1,0,0"/>
+                                    <Label Text="{Binding Unit}"
+                                           TextColor="{AppThemeBinding Light=#2c3e50, Dark=#ecf0f1}"
+                                           VerticalOptions="Center"
+                                           Margin="0,1,0,0"/>
+                                </HorizontalStackLayout>
+                                <!-- Edit Button -->
+                                <Button Text="Edit"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, 
+                                                Path=BindingContext.EditJobCommand}"
+                                        CommandParameter="{Binding .}"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Grid.Column="2"
+                                        Grid.RowSpan="2"
+                                        VerticalOptions="Center"
+                                        />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Jobs Action Buttons -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" 
+                  IsVisible="{Binding IsJobsListVisible}">
+                <Button Text="New Job"
+                        Command="{Binding AddNewJobCommand}"
+                        Style="{StaticResource NewJobButton}"/>
+                <Button Text="Hide Jobs"
+                        Command="{Binding HideJobsCommand}"
+                        Style="{StaticResource HideJobsButton}"
+                        Grid.Column="1"/>
+            </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

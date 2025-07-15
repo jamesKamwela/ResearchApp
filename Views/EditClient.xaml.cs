@@ -7,10 +7,12 @@ namespace ResearchApp.Views;
 
 public partial class EditClient : ContentPage
 {
-	public EditClient()
+	public EditClient(EditClientViewModel viewModel )
 	{
         InitializeComponent();
-        BindingContext = new EditClientViewModel();
+        BindingContext =  viewModel;
 
     }
 }
+
+

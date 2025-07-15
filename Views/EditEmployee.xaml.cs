@@ -13,9 +13,9 @@ using Microsoft.Extensions.Logging;
 namespace ResearchApp.Views; 
 public partial class EditEmployee : ContentPage
 {
-	public EditEmployee()
+	public EditEmployee(EditEmployeeViewModel viewModel)
 	{
 		InitializeComponent();
-        BindingContext = new EditEmployeeViewModel();
+        BindingContext = viewModel;
     }
 }

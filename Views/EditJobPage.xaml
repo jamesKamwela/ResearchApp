@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:behaviors="clr-namespace:CommunityToolkit.Maui.Behaviors;assembly=CommunityToolkit.Maui"
+             xmlns:viewModel="clr-namespace:ResearchApp.ViewModels"
+             xmlns:converters="clr-namespace:ResearchApp.Utils"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:localBehaviors="clr-namespace:ResearchApp.Behaviors"
+             x:Class="ResearchApp.Views.EditJobPage"
+             Title="EditJobPage">
+
+        <ContentPage.Resources>
+            <!-- Add your styles here -->
+            <Style x:Key="SectionHeader" TargetType="Label">
+                <Setter Property="FontSize" Value="20"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+                <Setter Property="Margin" Value="0,20,0,10"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#2C3E50, Dark=#ECF0F1}"/>
+            </Style>
+
+            <Style x:Key="FormLabel" TargetType="Label">
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Margin" Value="0,5,0,0"/>
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=#34495E, Dark=#BDC3C7}"/>
+            </Style>
+
+            <Style x:Key="ValidEntry" TargetType="Entry">
+                <Setter Property="TextColor" Value="{AppThemeBinding Light=Black, Dark=White}"/>
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FAFAFA, Dark=#2D2D2D}"/>
+            </Style>
+
+            <Style x:Key="InvalidEntry" TargetType="Entry">
+                <Setter Property="TextColor" Value="Red"/>
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFF0F0, Dark=#3D1E1E}"/>
+            </Style>
+
+            <Style x:Key="JobCard" TargetType="Border">
+                <Setter Property="StrokeShape" Value="RoundRectangle 10"/>
+                <Setter Property="Padding" Value="15"/>
+                <Setter Property="Margin" Value="10,5"/>
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=White, Dark=#252525}"/>
+                <Setter Property="Stroke" Value="{AppThemeBinding Light=#E0E0E0, Dark=#444444}"/>
+            </Style>
+
+            <!-- Base Button Style -->
+            <Style x:Key="BaseButton" TargetType="Button">
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="15,10"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Margin" Value="5"/>
+                <Setter Property="TextColor" Value="White"/>
+                <Setter Property="FontAttributes" Value="Bold"/>
+            </Style>
+
+            <!-- Primary Button Style -->
+            <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="#3498db"/>
+                <!-- Blue color -->
+            </Style>
+
+            <!-- Secondary Button Style -->
+            <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+                <Setter Property="BackgroundColor" Value="#2980b9"/>
+                <!-- Darker blue color -->
+            </Style>
+        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#e74c3c, Dark=#c0392b}"/>
+        </Style>
+    </ContentPage.Resources>
+    <ScrollView>
+        <VerticalStackLayout Spacing="10" Padding="20">
+        <Button Text="Delete Job"
+              Command="{Binding DeleteJobCommand}"
+              HorizontalOptions="End"
+              Style="{StaticResource DangerButton}"
+              />
+            
+        <!-- Job Details Section -->
+            <Label Text="Job Details" Style="{StaticResource SectionHeader}"/>
+
+            <Label Text="Job Name:" Style="{StaticResource FormLabel}"/>
+            <Entry Placeholder="Enter Job's Name" 
+               Text="{Binding EditingJob.Name, Mode=TwoWay}"
+               Style="{StaticResource ValidEntry}">
+            <Entry.Behaviors>
+                    <behaviors:TextValidationBehavior 
+                    InvalidStyle="{StaticResource InvalidEntry}"
+                    ValidStyle="{StaticResource ValidEntry}"
+                    MinimumLength="2"
+                    MaximumLength="100"/>
+            </Entry.Behaviors>
+        </Entry>
+
+            <Label Text="Amount and Unit" Style="{StaticResource FormLabel}"/>
+            <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="10">
+
+                <Label Text="Amount"
+                       Style="{StaticResource FormLabel}"/>
+                <Entry Text="{Binding EditingJob.Amount}" 
+                   Placeholder="0.00" 
+                   Keyboard="Numeric">
+                    <Entry.Behaviors>
+                        <localBehaviors:NumericValidationBehavior
+                        InvalidStyle="{StaticResource InvalidEntry}"
+                        ValidStyle="{StaticResource ValidEntry}"
+                        MinimumValue="0.01"
+                        MaximumValue="999999.99"
+                        />
+                    </Entry.Behaviors>
+                </Entry>
+                <Label Text="Per:"
+                   VerticalOptions="Center" 
+                   Style="{StaticResource FormLabel}"
+                   Grid.Column="1"/>
+
+                <!-- Unit Picker -->
+                <Picker ItemsSource="{Binding Units}"
+                        SelectedItem="{Binding EditingJob.unit}"
+                        Title="Select unit"
+                        Grid.Column="2"/>
+            </Grid>
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,20">
+                <!-- Action Buttons -->
+                    <Button Text="Cancel" 
+                        Command="{Binding CancelCommand}"
+                        Style="{StaticResource SecondaryButton}"/>
+
+                    <Button Text="Save" 
+                        Command="{Binding SaveJobCommand}"
+                        Style="{StaticResource PrimaryButton}"
+                        Grid.Column="1"/>
+                </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
+

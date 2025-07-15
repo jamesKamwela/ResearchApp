@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ResearchApp.ViewModels"
+             xmlns:converters="clr-namespace:ResearchApp.Utils"
+             x:Class="ResearchApp.Views.ClientJobsData"
+             Title="Client Jobs"
+             BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#0F172A}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+
+            <!-- Modern Color Scheme -->
+            <Color x:Key="PrimaryBlue">#3B82F6</Color>
+            <Color x:Key="PrimaryBlueLight">#60A5FA</Color>
+            <Color x:Key="AccentIndigo">#6366F1</Color>
+            <Color x:Key="AccentPurple">#8B5CF6</Color>
+            <Color x:Key="SurfaceLight">#FFFFFF</Color>
+            <Color x:Key="SurfaceDark">#1E293B</Color>
+            <Color x:Key="BackgroundLight">#F8FAFC</Color>
+            <Color x:Key="BackgroundDark">#0F172A</Color>
+
+            <!-- Modern Gradients -->
+            <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#3B82F6" Offset="0.0" />
+                <GradientStop Color="#6366F1" Offset="1.0" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="CardGradient" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="{AppThemeBinding Light=#FFFFFF, Dark=#1E293B}" Offset="0.0" />
+                <GradientStop Color="{AppThemeBinding Light=#F8FAFC, Dark=#334155}" Offset="1.0" />
+            </LinearGradientBrush>
+        </ResourceDictionary>
+
+        <!-- Modern Header Style -->
+        <Style x:Key="HeaderLabelStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="TextColor" Value="White"/>
+            <Setter Property="HorizontalOptions" Value="Center"/>
+            <Setter Property="Margin" Value="0,20,0,10"/>
+        </Style>
+
+        <!-- Enhanced Card Style -->
+        <Style x:Key="ModernCardStyle" TargetType="Frame">
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFFFFF, Dark=#1E293B}"/>
+            <Setter Property="BorderColor" Value="{AppThemeBinding Light=#E2E8F0, Dark=#475569}"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="HasShadow" Value="True"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="0,8"/>
+        </Style>
+
+        <!-- Modern Picker Style -->
+        <Style x:Key="PickerStyle" TargetType="Picker">
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#F1F5F9, Dark=#334155}"/>
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=#1E293B, Dark=#F1F5F9}"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontAttributes" Value="None"/>
+        </Style>
+
+        <!-- Section Title Style -->
+        <Style x:Key="SectionTitleStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=#475569, Dark=#CBD5E1}"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+
+        <!-- Column Header Style -->
+        <Style x:Key="ColumnHeaderStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontAttributes" Value="Bold"/>
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=#64748B, Dark=#94A3B8}"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+
+        <!-- Data Row Style -->
+        <Style x:Key="DataRowStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=#1E293B, Dark=#E2E8F0}"/>
+            <Setter Property="VerticalOptions" Value="Center"/>
+            <Setter Property="Margin" Value="0,8"/>
+        </Style>
+
+        <!-- Status Message Style -->
+        <Style x:Key="StatusMessageStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontAttributes" Value="None"/>
+            <Setter Property="TextColor" Value="{AppThemeBinding Light=#64748B, Dark=#94A3B8}"/>
+            <Setter Property="HorizontalOptions" Value="Center"/>
+            <Setter Property="Margin" Value="0,40"/>
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+            <!-- Modern Header Section -->
+            <Frame BackgroundColor="Transparent" 
+                   Background="{StaticResource HeaderGradient}"
+                   HasShadow="True"
+                   Padding="20,40,20,30"
+                   Margin="0,0,0,20">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="📊" 
+                           FontSize="32"
+                           HorizontalOptions="Center"/>
+                    <Label Text="{Binding ClientName}" 
+                           Style="{StaticResource HeaderLabelStyle}"/>
+                    <Label Text="Performance Analytics" 
+                           FontSize="16"
+                           TextColor="White"
+                           Opacity="0.8"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <VerticalStackLayout Spacing="20" Padding="20,0,20,30">
+
+                <!-- Period Selection Card -->
+                <Frame Style="{StaticResource ModernCardStyle}">
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="📅 Select Time Period" 
+                               Style="{StaticResource SectionTitleStyle}"/>
+                        <Frame BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#334155}"
+                               BorderColor="{AppThemeBinding Light=#E2E8F0, Dark=#475569}"
+                               CornerRadius="12"
+                               Padding="16"
+                               HasShadow="False">
+                            <Picker ItemsSource="{Binding PeriodOptions}" 
+                                    SelectedItem="{Binding SelectedPeriod, Mode=TwoWay}"
+                                    Style="{StaticResource PickerStyle}"
+                                    Title="Choose a period"/>
+                        </Frame>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Loading Indicator -->
+                <Frame IsVisible="{Binding IsLoading}"
+                       Style="{StaticResource ModernCardStyle}">
+                    <VerticalStackLayout Spacing="15">
+                        <ActivityIndicator 
+                            IsRunning="{Binding IsLoading}"
+                            HeightRequest="40"
+                            Color="{StaticResource PrimaryBlue}"/>
+                        <Label Text="Loading data..."
+                               FontSize="16"
+                               TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}"
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Status Message -->
+                <Label Text="{Binding StatusMessage}"
+                       Style="{StaticResource StatusMessageStyle}"
+                       IsVisible="{Binding HasData, Converter={StaticResource InvertedBoolConverter}}"/>
+
+                <!-- Data Table Card -->
+                <Frame Style="{StaticResource ModernCardStyle}"
+                       IsVisible="{Binding HasData}">
+                    <VerticalStackLayout Spacing="20">
+
+                        <!-- Table Title -->
+                        <Label Text="📋 Job Performance Data" 
+                               Style="{StaticResource SectionTitleStyle}"/>
+
+                        <!-- Table Headers -->
+                        <Grid ColumnDefinitions="*,1.2*,*,*,1.2*,1.2*" 
+                              ColumnSpacing="12"
+                              Padding="8,0">
+                            <Label Text="Date" 
+                                   Style="{StaticResource ColumnHeaderStyle}"
+                                   HorizontalOptions="Center"
+                                   Grid.Column="0"/>
+                            <Label Text="Job" 
+                                   Style="{StaticResource ColumnHeaderStyle}"
+                                   HorizontalOptions="Start"
+                                   Grid.Column="1"/>
+                            <Label Text="Team" 
+                                   Style="{StaticResource ColumnHeaderStyle}"
+                                   HorizontalOptions="Center"
+                                   Grid.Column="2"/>
+                            <Label Text="Qty" 
+                                   Style="{StaticResource ColumnHeaderStyle}"
+                                   HorizontalOptions="Center"
+                                   Grid.Column="3"/>
+                            <Label Text="Total" 
+                                   Style="{StaticResource ColumnHeaderStyle}"
+                                   HorizontalOptions="End"
+                                   Grid.Column="4"/>
+                            <Label Text="Commission" 
+                                   Style="{StaticResource ColumnHeaderStyle}"
+                                   HorizontalOptions="End"
+                                   Grid.Column="5"/>
+                        </Grid>
+
+                        <!-- Separator Line -->
+                        <BoxView HeightRequest="1" 
+                                 Color="{AppThemeBinding Light=#E2E8F0, Dark=#475569}"
+                                 HorizontalOptions="FillAndExpand"/>
+
+                        <!-- Data Rows -->
+                        <CollectionView ItemsSource="{Binding IndividualClientStats}"
+                                          IsVisible="{Binding HasData}"
+                                          Margin="16,0"
+                                        >
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Frame BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#2D3748}"
+                                           BorderColor="{AppThemeBinding Light=#F0F0F0, Dark=#4A5568}"
+                                           CornerRadius="8"
+                                           Padding="12,16"
+                                           Margin="0,4"
+                                           HasShadow="False">
+                                        <Grid ColumnDefinitions="*,1.2*,*,*,1.2*,1.2*" 
+                                              ColumnSpacing="12">
+                                            <Label Text="{Binding FormattedWorkDate}" 
+                                                   Style="{StaticResource DataRowStyle}"
+                                                   HorizontalOptions="Center"
+                                                   Grid.Column="0"/>
+                                            <Label Text="{Binding JobName}" 
+                                                   Style="{StaticResource DataRowStyle}"
+                                                   HorizontalOptions="Start"
+                                                   LineBreakMode="TailTruncation"
+                                                   Grid.Column="1"/>
+                                            <Label Text="{Binding EmployeeCount}" 
+                                                   Style="{StaticResource DataRowStyle}"
+                                                   HorizontalOptions="Center"
+                                                   Grid.Column="2"/>
+                                            <Label Text="{Binding FormattedQuantityCompleted}" 
+                                                   Style="{StaticResource DataRowStyle}"
+                                                   HorizontalOptions="Center"
+                                                   Grid.Column="3"/>
+                                            <Label Text="{Binding FormattedTotalAmount}" 
+                                                   Style="{StaticResource DataRowStyle}"
+                                                   HorizontalOptions="End"
+                                                   LineBreakMode="NoWrap"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{AppThemeBinding Light=#059669, Dark=#10B981}"
+                                                   Grid.Column="4"/>
+                                            <Label Text="{Binding FormattedAdminCommission}" 
+                                                   Style="{StaticResource DataRowStyle}"
+                                                   HorizontalOptions="End"
+                                                   LineBreakMode="NoWrap"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{AppThemeBinding Light=#DC2626, Dark=#F87171}"
+                                                   Grid.Column="5"/>
+                                        </Grid>
+                                    </Frame>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                    </VerticalStackLayout>
+                </Frame>
+
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
